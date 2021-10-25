@@ -40,7 +40,8 @@ if __name__ == '__main__':
     client = WorkflowClient.new_client(domain=DOMAIN)
     workflow: PeriodicallyExecutedWorkflow = client.new_workflow_stub(PeriodicallyExecutedWorkflow)
     execution = WorkflowClient.start(workflow.periodically_executed_workflow_method, "blah blah")
-    print("Started: workflow_id={} run_id={}".format(execution.workflow_id, execution.run_id))
+    workflow_execution = execution.workflow_execution
+    print("Started: workflow_id={} run_id={}".format(workflow_execution.workflow_id, workflow_execution.run_id))
 
     sleep(60 * 20)
 
