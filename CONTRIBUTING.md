@@ -65,8 +65,12 @@ External contributors: you don't need to worry about this section. We'll merge y
 We created a Makefile our life easier when developing
 
 
+#make fetch-idls
+
+it fetches the submodules of the project, in this case, the idls
+
 #make generate-grpc-code
 
-It will generate the most up-to-date gRPC client and server interfaces from the cadence .proto service definition (located at `idls`)
+It generates the most up-to-date gRPC client and server interfaces from the cadence .proto service definition (located at `idls`)
 
 
