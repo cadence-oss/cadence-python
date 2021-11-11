@@ -3,6 +3,7 @@ import grpc
 import uber.cadence.api.v1.service_domain_pb2_grpc as service_domain_pb2_grpc
 from cadence.cadence_types import ListDomainsRequest, ListDomainsResponse
 from cadence.gateway.cadence.interface import CadenceGatewayInterface
+from cadence.mapping.grpc.domain import list_domains_to_dataclass
 
 
 class GRPCGateway(CadenceGatewayInterface):
@@ -27,4 +28,4 @@ class GRPCGateway(CadenceGatewayInterface):
             metadata=self.metadata,
             timeout=self.timeout
         )
-        return response[0]
+        return (list_domains_to_dataclass(response[0]), response[1])

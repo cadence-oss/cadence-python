@@ -105,9 +105,10 @@ class WorkflowIdReusePolicy(IntEnum):
 
     
 class DomainStatus(IntEnum):
-    REGISTERED = 0
-    DEPRECATED = 1
-    DELETED = 2
+    INVALID = 0
+    REGISTERED = 1
+    DEPRECATED = 2
+    DELETED = 3
     
     @classmethod
     def value_for(cls, n: int) -> DomainStatus:
@@ -309,8 +310,9 @@ class TaskListKind(IntEnum):
 
     
 class ArchivalStatus(IntEnum):
-    DISABLED = 0
-    ENABLED = 1
+    INVALID = 0
+    DISABLED = 1
+    ENABLED = 2
     
     @classmethod
     def value_for(cls, n: int) -> ArchivalStatus:
@@ -1176,7 +1178,7 @@ class BadBinaries:
 class BadBinaryInfo:
     reason: str = None
     operator: str = None
-    created_time_nano: int = None
+    created_time: int = None
     
 
 # noinspection PyPep8
@@ -1236,17 +1238,38 @@ class ListDomainsResponse:
 class DescribeDomainRequest:
     name: str = None
     uuid: str = None
-    
+
 
 # noinspection PyPep8
 @dataclass
 class DescribeDomainResponse:
-    domain_info: DomainInfo = None
-    configuration: DomainConfiguration = None
-    replication_configuration: DomainReplicationConfiguration = None
+    id: str = None
+    name: str = None
+    status: DomainStatus = None
+    description: str = None
+    owner_email: str = None
+    data: Dict[str, str] = None
+    duration: int = None
+    bad_binaries: BadBinaries = None
+    history_archival_status: ArchivalStatus = None
+    history_archival_uri: str = None
+    visibility_archival_status: ArchivalStatus = None
+    visibility_archival_uri: str = None
+    active_cluster_name: str = None
+    clusters: List[ClusterReplicationConfiguration] = None
     failover_version: int = None
     is_global_domain: bool = None
-    
+    failover_info: FailoverInfo = None
+
+
+# noinspection PyPep8
+@dataclass
+class FailoverInfo:
+    failover_version: int = None
+    failover_start_timestamp: int = None
+    failover_expire_timestamp: int = None
+    completed_shard_count: int = None
+    pending_shards: List[int] = None
 
 # noinspection PyPep8
 @dataclass
