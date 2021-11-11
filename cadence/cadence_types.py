@@ -1249,7 +1249,7 @@ class DescribeDomainResponse:
     description: str = None
     owner_email: str = None
     data: Dict[str, str] = None
-    duration: int = None
+    workflow_execution_retention_period: int = None
     bad_binaries: BadBinaries = None
     history_archival_status: ArchivalStatus = None
     history_archival_uri: str = None

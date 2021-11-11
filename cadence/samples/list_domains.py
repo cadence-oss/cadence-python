@@ -1,10 +1,19 @@
 import uber.cadence.api.v1.service_domain_pb2 as service_domain_pb2
-
-from cadence.gateway.cadence.client import WorkflowClient
+from cadence.cadence_types import ListDomainsRequest
+from cadence.workflowservice import WorkflowService, PROTOCOL_GRPC, PROTOCOL_TCHANNEL
 
 if __name__ == "__main__":
-    request = service_domain_pb2.ListDomainsRequest(page_size=20, next_page_token=bytes(0))
-    wfc = WorkflowClient()
+    request = ListDomainsRequest()
+    request.page_size = 20
+    request.next_page_token = bytes(0)
+    wfc = WorkflowService.create('localhost', 7833, 300, PROTOCOL_GRPC)
     result = wfc.list_domains(request)
-    for domain in result.domains:
+    for domain in result[0].domains:
+        print(domain.id)
+        print(domain.name)
+
+    wfc = WorkflowService.create('localhost', 7933, 300, PROTOCOL_TCHANNEL)
+    result = wfc.list_domains(request)
+    for domain in result[0].domains:
+        print(domain.id)
         print(domain.name)

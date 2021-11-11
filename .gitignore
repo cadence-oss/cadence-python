@@ -3,3 +3,5 @@ build
 cadence_client.egg-info/
 venv
 .idea
+__pycache__/
+*.py[cod]
