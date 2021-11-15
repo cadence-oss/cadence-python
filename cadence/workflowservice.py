@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from typing import Tuple, Callable
-from uuid import uuid4
 
 import os
 import socket
 
+from cadence.gateway.cadence.grpc_gateway import GRPCGateway
+from cadence.gateway.cadence.interface import CadenceGatewayInterface
+from cadence.gateway.cadence.tchannel_gateway import TChannelGateway
 from cadence.thrift import cadence_thrift
 from cadence.connection import TChannelConnection, ThriftFunctionCall
 from cadence.errors import find_error
@@ -27,20 +29,32 @@ from cadence.cadence_types import PollForActivityTaskResponse, StartWorkflowExec
 
 TCHANNEL_SERVICE = "cadence-frontend"
 
+PROTOCOL_TCHANNEL = "tchannel"
+PROTOCOL_GRPC = "grpc"
+
 
 class WorkflowService:
-
     @classmethod
-    def create(cls, host: str, port: int, timeout: int = None):
-        connection = TChannelConnection.open(host, port, timeout=timeout)
-        return cls(connection)
+    def create(cls, host: str, port: int, timeout: int = None, protocol: str = "tchannel"):
+        connection = None
+        gateway = None
+
+        if protocol == PROTOCOL_TCHANNEL:
+            connection = TChannelConnection.open(host, port, timeout=timeout)
+            gateway = TChannelGateway(connection)
+        elif protocol == PROTOCOL_GRPC:
+            gateway = GRPCGateway(host, port, timeout)
+
+        return cls(connection, gateway)
+
 
     @classmethod
     def get_identity(cls):
         return "%d@%s" % (os.getpid(), socket.gethostname())
 
-    def __init__(self, connection: TChannelConnection):
+    def __init__(self, connection: TChannelConnection, gateway: CadenceGatewayInterface):
         self.connection = connection
+        self.gateway = gateway
         self.execution_start_to_close_timeout_seconds = 86400
         self.task_start_to_close_timeout_seconds = 120
 
@@ -78,7 +92,7 @@ class WorkflowService:
         return self.call_return("DescribeDomain", request, DescribeDomainResponse)
 
     def list_domains(self, request: ListDomainsRequest) -> Tuple[ListDomainsResponse, object]:
-        return self.call_return("ListDomains", request, ListDomainsResponse)
+        return self.gateway.list_domains(request)
 
     def update_domain(self, request: UpdateDomainRequest) -> Tuple[UpdateDomainResponse, object]:
         return self.call_return("UpdateDomain", request, UpdateDomainResponse)
@@ -128,7 +142,7 @@ class WorkflowService:
         return self.call_void("RespondActivityTaskCanceled", request)
 
     def respond_activity_task_canceled_by_id(self, request: RespondActivityTaskCanceledByIDRequest) -> \
-        Tuple[None, object]:
+            Tuple[None, object]:
         return self.call_void("RespondActivityTaskCanceledByID", request)
 
     def request_cancel_workflow_execution(self, request: RequestCancelWorkflowExecutionRequest) -> \

@@ -108,6 +108,7 @@ class DomainStatus(IntEnum):
     REGISTERED = 0
     DEPRECATED = 1
     DELETED = 2
+    INVALID = 3
     
     @classmethod
     def value_for(cls, n: int) -> DomainStatus:
@@ -1159,6 +1160,7 @@ class DomainInfo:
 @dataclass
 class DomainConfiguration:
     workflow_execution_retention_period_in_days: int = None
+    workflow_execution_retention_period: int = None
     emit_metric: bool = None
     archival_bucket_name: str = None
     archival_status: ArchivalStatus = None
