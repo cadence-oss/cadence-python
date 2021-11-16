@@ -312,6 +312,7 @@ class TaskListKind(IntEnum):
 class ArchivalStatus(IntEnum):
     DISABLED = 0
     ENABLED = 1
+    INVALID = 2
     
     @classmethod
     def value_for(cls, n: int) -> ArchivalStatus:
