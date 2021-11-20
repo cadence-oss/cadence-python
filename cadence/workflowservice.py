@@ -5,9 +5,9 @@ from typing import Tuple, Callable
 import os
 import socket
 
-from cadence.gateway.cadence.grpc_gateway import GRPCGateway
-from cadence.gateway.cadence.interface import CadenceGatewayInterface
-from cadence.gateway.cadence.tchannel_gateway import TChannelGateway
+from cadence.gateway.cadence.grpc_service import CadenceGrpcService
+from cadence.gateway.cadence.interface import CadenceServiceInterface
+from cadence.gateway.cadence.tchannel_service import CadenceTChannelService
 from cadence.thrift import cadence_thrift
 from cadence.connection import TChannelConnection, ThriftFunctionCall
 from cadence.errors import find_error
@@ -41,9 +41,9 @@ class WorkflowService:
 
         if protocol == PROTOCOL_TCHANNEL:
             connection = TChannelConnection.open(host, port, timeout=timeout)
-            gateway = TChannelGateway(connection)
+            gateway = CadenceTChannelService(connection)
         elif protocol == PROTOCOL_GRPC:
-            gateway = GRPCGateway(host, port, timeout)
+            gateway = CadenceGrpcService(host, port, timeout)
 
         return cls(connection, gateway)
 
@@ -52,7 +52,7 @@ class WorkflowService:
     def get_identity(cls):
         return "%d@%s" % (os.getpid(), socket.gethostname())
 
-    def __init__(self, connection: TChannelConnection, gateway: CadenceGatewayInterface):
+    def __init__(self, connection: TChannelConnection, gateway: CadenceServiceInterface):
         self.connection = connection
         self.gateway = gateway
         self.execution_start_to_close_timeout_seconds = 86400

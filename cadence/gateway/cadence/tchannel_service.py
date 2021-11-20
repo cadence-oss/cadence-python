@@ -5,7 +5,7 @@ from typing import Tuple
 import os
 import socket
 
-from cadence.gateway.cadence.interface import CadenceGatewayInterface
+from cadence.gateway.cadence.interface import CadenceServiceInterface
 from cadence.thrift import cadence_thrift
 from cadence.connection import TChannelConnection, ThriftFunctionCall
 from cadence.errors import find_error
@@ -15,7 +15,7 @@ from cadence.cadence_types import ListDomainsRequest, ListDomainsResponse
 TCHANNEL_SERVICE = "cadence-frontend"
 
 
-class TChannelGateway(CadenceGatewayInterface):
+class CadenceTChannelService(CadenceServiceInterface):
 
     @classmethod
     def create(cls, host: str, port: int, timeout: int = None):

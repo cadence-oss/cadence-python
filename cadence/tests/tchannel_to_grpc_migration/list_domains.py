@@ -10,15 +10,12 @@ if __name__ == "__main__":
     wfc = WorkflowService.create('localhost', 7833, 300, PROTOCOL_GRPC)
     result = wfc.list_domains(request)
     for domain in result[0].domains:
-        print(domain.id)
-        print(domain.name)
+        print(domain.domain_info.uuid)
+        print(domain.domain_info.name)
 
-    request = ListDomainsRequest(
-        page_size=20,
-        next_page_token=bytes(0)
-    )
+
     wfc = WorkflowService.create('localhost', 7933, 300, PROTOCOL_TCHANNEL)
     result = wfc.list_domains(request)
     for domain in result[0].domains:
-        print(domain.id)
-        print(domain.name)
+        print(domain.domain_info.uuid)
+        print(domain.domain_info.name)

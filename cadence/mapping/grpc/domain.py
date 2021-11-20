@@ -6,8 +6,8 @@ from cadence.constants import DAY_DURATION
 from uber.cadence.api.v1 import domain_pb2
 
 
-def list_domains_request_to_proto(request: ListDomainsRequest) -> service_domain_pb2.ListDomainsRequest:
-    return service_domain_pb2.ListDomainsRequest(page_size=request.page_size, next_page_token=request.page_size)
+def list_domains_request_dataclass_to_proto(request: ListDomainsRequest) -> service_domain_pb2.ListDomainsRequest:
+    return service_domain_pb2.ListDomainsRequest(page_size=request.page_size, next_page_token=request.next_page_token)
 
 
 def proto_list_domains_response_to_dataclass(response: service_domain_pb2.ListDomainsResponse) -> ListDomainsResponse:
