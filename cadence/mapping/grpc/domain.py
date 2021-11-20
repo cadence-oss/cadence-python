@@ -2,9 +2,15 @@ import uber.cadence.api.v1.service_domain_pb2 as service_domain_pb2
 from cadence.cadence_types import ListDomainsResponse, DescribeDomainResponse, DomainStatus, ArchivalStatus, \
     BadBinaryInfo, BadBinaries, ClusterReplicationConfiguration, ListDomainsRequest, DomainInfo, \
     DomainConfiguration, DomainReplicationConfiguration
-from cadence.constants import DAY_DURATION
 from uber.cadence.api.v1 import domain_pb2
 
+
+def ms_to_days(milliseconds: int) -> int:
+    seconds, milliseconds = divmod(milliseconds,1000)
+    minutes, seconds = divmod(seconds, 60)
+    hours, minutes = divmod(minutes, 60)
+    days, hours = divmod(hours, 24)
+    return days
 
 def list_domains_request_dataclass_to_proto(request: ListDomainsRequest) -> service_domain_pb2.ListDomainsRequest:
     return service_domain_pb2.ListDomainsRequest(page_size=request.page_size, next_page_token=request.next_page_token)
@@ -69,7 +75,7 @@ def proto_domain_status_to_dataclass(ds: domain_pb2.DomainStatus) -> DomainStatu
 def proto_domain_configuration_do_dataclass(
         domain_response: service_domain_pb2.DescribeDomainResponse) -> DomainConfiguration:
     domain_configuration = DomainConfiguration(
-        workflow_execution_retention_period_in_days=domain_response.workflow_execution_retention_period.ToSeconds() * DAY_DURATION,
+        workflow_execution_retention_period_in_days=ms_to_days(domain_response.workflow_execution_retention_period.ToMilliseconds()),
         workflow_execution_retention_period=domain_response.workflow_execution_retention_period.ToMilliseconds(),
         emit_metric=False,
         archival_bucket_name='',

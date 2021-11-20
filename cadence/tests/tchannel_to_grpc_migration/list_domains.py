@@ -8,14 +8,9 @@ if __name__ == "__main__":
         next_page_token=bytes(0)
     )
     wfc = WorkflowService.create('localhost', 7833, 300, PROTOCOL_GRPC)
-    result = wfc.list_domains(request)
-    for domain in result[0].domains:
-        print(domain.domain_info.uuid)
-        print(domain.domain_info.name)
-
-
+    grpc_result, errorOne = wfc.list_domains(request)
     wfc = WorkflowService.create('localhost', 7933, 300, PROTOCOL_TCHANNEL)
-    result = wfc.list_domains(request)
-    for domain in result[0].domains:
-        print(domain.domain_info.uuid)
-        print(domain.domain_info.name)
+    tchannel_result, errorTwo = wfc.list_domains(request)
+
+    assert grpc_result.domains[0].domain_info.uuid == tchannel_result.domains[0].domain_info.uuid
+    assert grpc_result.domains[0].domain_info.name == tchannel_result.domains[0].domain_info.name

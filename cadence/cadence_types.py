@@ -1154,6 +1154,7 @@ class DomainInfo:
     description: str = None
     owner_email: str = None
     data: Dict[str, str] = field(default_factory=dict)
+    #is this one ID in proto?
     uuid: str = None
     
 
@@ -1162,8 +1163,11 @@ class DomainInfo:
 class DomainConfiguration:
     workflow_execution_retention_period_in_days: int = None
     workflow_execution_retention_period: int = None
+    # is this deprecated?
     emit_metric: bool = None
+    # what/s the equivalent of this is the new proto?
     archival_bucket_name: str = None
+    # is this history_archival_status or visibility_archival_status or none on the proto? should I add the missing one?
     archival_status: ArchivalStatus = None
     bad_binaries: BadBinaries = None
     
@@ -1179,6 +1183,7 @@ class BadBinaries:
 class BadBinaryInfo:
     reason: str = None
     operator: str = None
+    # should I add a new field called created time (no nano)? Would it be in ms?
     created_time_nano: int = None
     
 
@@ -1249,6 +1254,12 @@ class DescribeDomainResponse:
     replication_configuration: DomainReplicationConfiguration = None
     failover_version: int = None
     is_global_domain: bool = None
+
+    #missing fields (from proto). Should I add them?
+    """
+    string visibility_archival_uri = 12;
+    FailoverInfo failover_info = 17;
+    """
     
 
 # noinspection PyPep8
