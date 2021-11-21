@@ -1,7 +1,8 @@
 from typing import Tuple
 import grpc
 import uber.cadence.api.v1.service_domain_pb2_grpc as service_domain_pb2_grpc
-from cadence.cadence_types import ListDomainsRequest, ListDomainsResponse
+from cadence.cadence_types import ListDomainsRequest, ListDomainsResponse, StartWorkflowExecutionRequest, \
+    StartWorkflowExecutionResponse
 from cadence.gateway.cadence.interface import CadenceServiceInterface
 from cadence.mapping.grpc.domain import \
     proto_list_domains_response_to_dataclass, list_domains_request_dataclass_to_proto
@@ -31,3 +32,6 @@ class CadenceGrpcService(CadenceServiceInterface):
             timeout=self.timeout
         )
         return (proto_list_domains_response_to_dataclass(response[0]), response[1])
+
+    def start_workflow(self, request: StartWorkflowExecutionRequest) -> Tuple[StartWorkflowExecutionResponse, object]:
+        pass
