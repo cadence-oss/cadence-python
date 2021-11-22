@@ -303,6 +303,7 @@ class HistoryEventFilterType(IntEnum):
 class TaskListKind(IntEnum):
     NORMAL = 0
     STICKY = 1
+    INVALID = 2
     
     @classmethod
     def value_for(cls, n: int) -> TaskListKind:
@@ -391,7 +392,7 @@ class ActivityType:
 class TaskList:
     name: str = None
     kind: TaskListKind = None
-    
+
 
 # noinspection PyPep8
 @dataclass
