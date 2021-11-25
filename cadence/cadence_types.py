@@ -1289,7 +1289,7 @@ class StartWorkflowExecutionRequest:
     workflow_type: WorkflowType = None
     task_list: TaskList = None
     input: bytes = None
-    execution_start_to_close_timeout: int = None
+    execution_start_to_close_timeout_seconds: int = None
     task_start_to_close_timeout_seconds: int = None
     identity: str = None
     request_id: str = None

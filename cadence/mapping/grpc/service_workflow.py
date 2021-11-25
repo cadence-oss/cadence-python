@@ -34,7 +34,7 @@ def start_workflow_execution_request_dataclass_to_proto(
         workflow_type=workflow_type_dataclass_to_proto(request.workflow_type),
         task_list=task_list_to_proto(request.task_list),
         input=payload_to_proto(request.input),
-        execution_start_to_close_timeout=duration_pb2.Duration(seconds=request.execution_start_to_close_timeout),
+        execution_start_to_close_timeout=duration_pb2.Duration(seconds=request.execution_start_to_close_timeout_seconds),
         task_start_to_close_timeout=duration_pb2.Duration(seconds=request.task_start_to_close_timeout_seconds),
         identity=request.identity,
         request_id=request.request_id,
