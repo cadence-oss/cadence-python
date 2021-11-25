@@ -98,6 +98,7 @@ class WorkflowIdReusePolicy(IntEnum):
     AllowDuplicate = 1
     RejectDuplicate = 2
     TerminateIfRunning = 3
+    Invalid = 4
     
     @classmethod
     def value_for(cls, n: int) -> WorkflowIdReusePolicy:
@@ -1288,7 +1289,7 @@ class StartWorkflowExecutionRequest:
     workflow_type: WorkflowType = None
     task_list: TaskList = None
     input: bytes = None
-    execution_start_to_close_timeout_seconds: int = None
+    execution_start_to_close_timeout: int = None
     task_start_to_close_timeout_seconds: int = None
     identity: str = None
     request_id: str = None
@@ -1299,6 +1300,7 @@ class StartWorkflowExecutionRequest:
     memo: Memo = None
     search_attributes: SearchAttributes = None
     header: Header = None
+    delay_start: int = None
     
 
 # noinspection PyPep8
