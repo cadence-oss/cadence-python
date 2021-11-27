@@ -34,7 +34,7 @@ class CadenceGrpcService(CadenceServiceInterface):
             metadata=self.metadata,
             timeout=self.timeout
         )
-        return (proto_list_domains_response_to_dataclass(response[0]), response[1])
+        return (proto_list_domains_response_to_dataclass(response[0]), None) #TODO check how errors are process via tchannel
 
     def start_workflow(self, request: StartWorkflowExecutionRequest) -> Tuple[StartWorkflowExecutionResponse, object]:
         grpc_request = start_workflow_execution_request_dataclass_to_proto(request)
@@ -43,4 +43,4 @@ class CadenceGrpcService(CadenceServiceInterface):
             metadata=self.metadata,
             timeout=self.timeout
         )
-        return (start_workflow_execution_response_to_dataclass(response[0]), response[1])
+        return (start_workflow_execution_response_to_dataclass(response[0]), None) #TODO check how errors are process via tchannel
