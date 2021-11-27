@@ -121,8 +121,8 @@ class WorkflowClient:
 
     @classmethod
     def new_client(cls, host: str = "localhost", port: int = 7933, domain: str = "",
-                   options: WorkflowClientOptions = None, timeout: int = DEFAULT_SOCKET_TIMEOUT_SECONDS) -> WorkflowClient:
-        service = WorkflowService.create(host, port, timeout=timeout)
+                   options: WorkflowClientOptions = None, timeout: int = DEFAULT_SOCKET_TIMEOUT_SECONDS, protocol: str = "tchannel") -> WorkflowClient:
+        service = WorkflowService.create(host, port, timeout=timeout, protocol=protocol)
         return cls(service=service, domain=domain, options=options)
 
     @classmethod
