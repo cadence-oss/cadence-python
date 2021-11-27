@@ -52,7 +52,7 @@ def start_workflow_execution_request_dataclass_to_proto(
 def start_workflow_execution_response_to_dataclass(response: service_workflow_pb2.StartWorkflowExecutionResponse) -> StartWorkflowExecutionResponse:
     return StartWorkflowExecutionResponse(
         run_id=response.run_id
-    ) if request else None
+    ) if response else None
 
 
 def workflow_type_dataclass_to_proto(request: WorkflowType) -> common_pb2.WorkflowType:

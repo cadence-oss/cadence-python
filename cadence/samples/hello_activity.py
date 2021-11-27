@@ -48,7 +48,7 @@ if __name__ == '__main__':
     worker.register_workflow_implementation_type(GreetingWorkflowImpl)
     factory.start()
 
-    client = WorkflowClient.new_client(domain=DOMAIN, protocol=PROTOCOL_GRPC)
+    client = WorkflowClient.new_client(domain=DOMAIN, protocol=PROTOCOL_GRPC, port=7833)
     greeting_workflow: GreetingWorkflow = client.new_workflow_stub(GreetingWorkflow)
     result = greeting_workflow.get_greeting("Python")
     print(result)
