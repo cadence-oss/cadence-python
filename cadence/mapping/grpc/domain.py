@@ -67,7 +67,7 @@ def proto_domain_status_to_dataclass(domain_status: domain_pb2.DomainStatus) -> 
 def proto_domain_configuration_do_dataclass(
         domain_configuration: service_domain_pb2.DescribeDomainResponse) -> DomainConfiguration:
     return DomainConfiguration(
-        workflow_execution_retention_period_in_days=ms_to_days(domain_configuration.workflow_execution_retention_period),
+        workflow_execution_retention_period_in_days=ms_to_days(domain_configuration.workflow_execution_retention_period.ToMilliseconds()),
         workflow_execution_retention_period=domain_configuration.workflow_execution_retention_period.ToMilliseconds(),
         emit_metric=False,
         archival_bucket_name='',

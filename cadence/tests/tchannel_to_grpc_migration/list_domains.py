@@ -12,5 +12,9 @@ if __name__ == "__main__":
     wfc = WorkflowService.create('localhost', 7933, 300, PROTOCOL_TCHANNEL)
     tchannel_result, errorTwo = wfc.list_domains(request)
 
-    assert grpc_result.domains[0].domain_info.uuid == tchannel_result.domains[0].domain_info.uuid
-    assert grpc_result.domains[0].domain_info.name == tchannel_result.domains[0].domain_info.name
+    assert errorOne is None
+    assert errorTwo is None
+    assert len(grpc_result.domains) == len(tchannel_result.domains)
+    for i in range(len(grpc_result.domains)):
+        assert grpc_result.domains[i].domain_info.uuid == tchannel_result.domains[i].domain_info.uuid
+        assert grpc_result.domains[i].domain_info.name == tchannel_result.domains[i].domain_info.name
