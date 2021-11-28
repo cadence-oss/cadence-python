@@ -19,7 +19,6 @@ class CadenceServiceInterface:
     def close(self):
         pass
 
-
     @abstractmethod
     def set_next_timeout_cb(self, cb: Callable):
         pass
