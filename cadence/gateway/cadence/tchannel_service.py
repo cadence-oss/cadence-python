@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Tuple
+from typing import Tuple, Callable
 
 import os
 import socket
@@ -61,3 +61,9 @@ class CadenceTChannelService(CadenceServiceInterface):
 
     def start_workflow(self, request: StartWorkflowExecutionRequest) -> Tuple[StartWorkflowExecutionResponse, object]:
         return self.call_return("StartWorkflowExecution", request, StartWorkflowExecutionResponse)
+
+    def close(self):
+        self.connection.close()
+
+    def set_next_timeout_cb(self, cb: Callable):
+        self.connection.set_next_timeout_cb(cb)

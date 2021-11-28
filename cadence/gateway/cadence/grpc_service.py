@@ -1,14 +1,21 @@
-from typing import Tuple
+from typing import Tuple, Callable
 import grpc
 import uber.cadence.api.v1.service_domain_pb2_grpc as service_domain_pb2_grpc
 import uber.cadence.api.v1.service_workflow_pb2_grpc as service_workflow_pb2_grpc
 from cadence.cadence_types import ListDomainsRequest, ListDomainsResponse, StartWorkflowExecutionRequest, \
     StartWorkflowExecutionResponse
+from cadence.errors import RPCError
 from cadence.gateway.cadence.interface import CadenceServiceInterface
 from cadence.mapping.grpc.domain import \
     proto_list_domains_response_to_dataclass, list_domains_request_dataclass_to_proto
 from cadence.mapping.grpc.service_workflow import start_workflow_execution_request_dataclass_to_proto, start_workflow_execution_response_to_dataclass
 
+
+def process_error(e: grpc.RpcError) -> RPCError:
+    return RPCError(
+        message=e.details(),
+        code=e.code(),
+    )
 
 class CadenceGrpcService(CadenceServiceInterface):
     """
@@ -22,25 +29,36 @@ class CadenceGrpcService(CadenceServiceInterface):
         self.timeout = timeout
         self.channel = grpc.insecure_channel(
             '{}:{}'.format(host, port))
-
         # stubs
         self.domain = service_domain_pb2_grpc.DomainAPIStub(self.channel)
         self.service_workflow = service_workflow_pb2_grpc.WorkflowAPIStub(self.channel)
 
+    def close(self):
+        self.channel.close()
+
+    def set_next_timeout_cb(self, cb: Callable):
+        raise NotImplementedError
+
     def list_domains(self, request: ListDomainsRequest) -> Tuple[ListDomainsResponse, object]:
         grpc_request = list_domains_request_dataclass_to_proto(request)
-        response = self.domain.ListDomains.with_call(
-            grpc_request,
-            metadata=self.metadata,
-            timeout=self.timeout
-        )
-        return (proto_list_domains_response_to_dataclass(response[0]), None) #TODO check how errors are process via tchannel
+        try:
+            response = self.domain.ListDomains.with_call(
+                grpc_request,
+                metadata=self.metadata,
+                timeout=self.timeout
+            )
+            return (proto_list_domains_response_to_dataclass(response[0]), None) #TODO check how errors are process via tchannel
+        except grpc.RpcError as e:
+            return None, process_error(e)
 
     def start_workflow(self, request: StartWorkflowExecutionRequest) -> Tuple[StartWorkflowExecutionResponse, object]:
         grpc_request = start_workflow_execution_request_dataclass_to_proto(request)
-        response = self.service_workflow.StartWorkflowExecution.with_call(
-            grpc_request,
-            metadata=self.metadata,
-            timeout=self.timeout
-        )
-        return (start_workflow_execution_response_to_dataclass(response[0]), None) #TODO check how errors are process via tchannel
+        try:
+            response = self.service_workflow.StartWorkflowExecution.with_call(
+                grpc_request,
+                metadata=self.metadata,
+                timeout=self.timeout
+            )
+            return start_workflow_execution_response_to_dataclass(response[0]), None  #TODO check how errors are process via tchannel
+        except grpc.RpcError as e:
+            return None, process_error(e)

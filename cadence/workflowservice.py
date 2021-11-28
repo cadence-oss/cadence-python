@@ -183,7 +183,7 @@ class WorkflowService:
         return self.call_return("DescribeTaskList", request, DescribeTaskListResponse)
 
     def close(self):
-        self.connection.close()
+        self.cadence_service.close()
 
     def set_next_timeout_cb(self, cb: Callable):
-        self.connection.set_next_timeout_cb(cb)
+        self.cadence_service.set_next_timeout_cb(cb)

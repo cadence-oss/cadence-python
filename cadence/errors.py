@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Optional
-
+import grpc
 
 @dataclass
 class BadRequestError(Exception):
@@ -104,6 +104,12 @@ class ClientVersionNotSupportedError(Exception):
     feature_version: str
     client_impl: str
     supported_versions: str
+
+
+@dataclass
+class RPCError(Exception):
+    message: str
+    code: grpc.StatusCode
 
 
 CADENCE_ERROR_FIELDS = {
