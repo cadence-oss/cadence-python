@@ -13,12 +13,10 @@ def list_domains_request_dataclass_to_proto(request: ListDomainsRequest) -> serv
 
 
 def proto_list_domains_response_to_dataclass(response: service_domain_pb2.ListDomainsResponse) -> ListDomainsResponse:
-    list_domains = ListDomainsResponse(
+    return ListDomainsResponse(
         domains=[proto_describe_domain_to_dataclass(domain) for domain in response.domains],
         next_page_token=response.next_page_token
-    )
-
-    return list_domains
+    ) if response else None
 
 
 def proto_describe_domain_to_dataclass(
@@ -29,7 +27,7 @@ def proto_describe_domain_to_dataclass(
         replication_configuration=proto_replication_configuration_to_dataclass(domain_response),
         failover_version=domain_response.failover_version,
         is_global_domain=domain_response.is_global_domain,
-    )
+    ) if domain_response else None
 
     return domain
 
@@ -42,7 +40,7 @@ def proto_domain_info_to_dataclass(domain_response: service_domain_pb2.DescribeD
         owner_email=domain_response.owner_email,
         data={key: value for key, value in domain_response.data.values()},
         uuid=domain_response.id,
-    )
+    ) if domain_response else None
 
     return domain_info
 
@@ -52,7 +50,7 @@ def proto_replication_configuration_to_dataclass(
     replication_configuration = DomainReplicationConfiguration(
         active_cluster_name=domain_response.active_cluster_name,
         clusters=[proto_cluster_replication_configuration_to_metadata(cluster) for cluster in domain_response.clusters]
-    )
+    ) if domain_response else None
 
     return replication_configuration
 
@@ -81,7 +79,7 @@ def proto_domain_configuration_do_dataclass(
         visibility_archival_status=proto_archival_status_to_dataclass(domain_response.visibility_archival_status),
         visibility_archival_uri=domain_response.visibility_archival_uri,
         bad_binaries=proto_bad_binaries_to_dataclass(domain_response.bad_binaries),
-    )
+    ) if domain_response else None
 
     return domain_configuration
 
@@ -98,7 +96,7 @@ def proto_archival_status_to_dataclass(archival_status: domain_pb2.ArchivalStatu
 def proto_bad_binaries_to_dataclass(bb: domain_pb2.BadBinaries) -> BadBinaries:
     bad_binaries = BadBinaries(
         binaries={key: proto_bad_binary_info_to_dataclass(bad_binary_info) for key, bad_binary_info in bb.binaries}
-    )
+    ) if bb else None
 
     return bad_binaries
 
@@ -108,7 +106,7 @@ def proto_bad_binary_info_to_dataclass(bb: domain_pb2.BadBinaryInfo) -> BadBinar
         reason=bb.reason,
         operator=bb.operator,
         created_time_nano=bb.created_time.ToNanoseconds(),
-    )
+    ) if bb else None
 
     return bad_binary_info
 
@@ -117,6 +115,6 @@ def proto_cluster_replication_configuration_to_metadata(
         d: domain_pb2.ClusterReplicationConfiguration) -> ClusterReplicationConfiguration:
     cluster_replication_configuration = ClusterReplicationConfiguration(
         cluster_name=d.cluster_name
-    )
+    ) if d else None
 
     return cluster_replication_configuration

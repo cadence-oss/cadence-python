@@ -52,9 +52,9 @@ class WorkflowService:
     def get_identity(cls):
         return "%d@%s" % (os.getpid(), socket.gethostname())
 
-    def __init__(self, connection: TChannelConnection, gateway: CadenceServiceInterface):
+    def __init__(self, connection: TChannelConnection, cadence_service: CadenceServiceInterface):
         self.connection = connection
-        self.gateway = gateway
+        self.cadence_service = cadence_service
         self.execution_start_to_close_timeout_seconds = 86400
         self.task_start_to_close_timeout_seconds = 120
 
@@ -83,7 +83,7 @@ class WorkflowService:
         return None, error
 
     def start_workflow(self, request: StartWorkflowExecutionRequest) -> Tuple[StartWorkflowExecutionResponse, object]:
-        return self.call_return("StartWorkflowExecution", request, StartWorkflowExecutionResponse)
+        return self.cadence_service.start_workflow(request)
 
     def register_domain(self, request: RegisterDomainRequest) -> Tuple[None, object]:
         return self.call_void("RegisterDomain", request)
@@ -92,7 +92,7 @@ class WorkflowService:
         return self.call_return("DescribeDomain", request, DescribeDomainResponse)
 
     def list_domains(self, request: ListDomainsRequest) -> Tuple[ListDomainsResponse, object]:
-        return self.gateway.list_domains(request)
+        return self.cadence_service.list_domains(request)
 
     def update_domain(self, request: UpdateDomainRequest) -> Tuple[UpdateDomainResponse, object]:
         return self.call_return("UpdateDomain", request, UpdateDomainResponse)

@@ -10,7 +10,8 @@ from cadence.thrift import cadence_thrift
 from cadence.connection import TChannelConnection, ThriftFunctionCall
 from cadence.errors import find_error
 from cadence.conversions import copy_thrift_to_py, copy_py_to_thrift
-from cadence.cadence_types import ListDomainsRequest, ListDomainsResponse
+from cadence.cadence_types import ListDomainsRequest, ListDomainsResponse, StartWorkflowExecutionRequest, \
+    StartWorkflowExecutionResponse
 
 TCHANNEL_SERVICE = "cadence-frontend"
 
@@ -57,3 +58,6 @@ class CadenceTChannelService(CadenceServiceInterface):
 
     def list_domains(self, request: ListDomainsRequest) -> Tuple[ListDomainsResponse, object]:
         return self.call_return("ListDomains", request, ListDomainsResponse)
+
+    def start_workflow(self, request: StartWorkflowExecutionRequest) -> Tuple[StartWorkflowExecutionResponse, object]:
+        return self.call_return("StartWorkflowExecution", request, StartWorkflowExecutionResponse)

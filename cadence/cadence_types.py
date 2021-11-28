@@ -98,6 +98,7 @@ class WorkflowIdReusePolicy(IntEnum):
     AllowDuplicate = 1
     RejectDuplicate = 2
     TerminateIfRunning = 3
+    Invalid = 4
     
     @classmethod
     def value_for(cls, n: int) -> WorkflowIdReusePolicy:
@@ -303,6 +304,7 @@ class HistoryEventFilterType(IntEnum):
 class TaskListKind(IntEnum):
     NORMAL = 0
     STICKY = 1
+    INVALID = 2
     
     @classmethod
     def value_for(cls, n: int) -> TaskListKind:
@@ -391,7 +393,7 @@ class ActivityType:
 class TaskList:
     name: str = None
     kind: TaskListKind = None
-    
+
 
 # noinspection PyPep8
 @dataclass
@@ -1305,6 +1307,7 @@ class StartWorkflowExecutionRequest:
     memo: Memo = None
     search_attributes: SearchAttributes = None
     header: Header = None
+    delay_start: int = None
     
 
 # noinspection PyPep8
