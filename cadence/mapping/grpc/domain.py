@@ -6,11 +6,7 @@ from uber.cadence.api.v1 import domain_pb2
 
 
 def ms_to_days(milliseconds: int) -> int:
-    seconds, milliseconds = divmod(milliseconds,1000)
-    minutes, seconds = divmod(seconds, 60)
-    hours, minutes = divmod(minutes, 60)
-    days, hours = divmod(hours, 24)
-    return days
+    return int(milliseconds / (1000*60*60*24))
 
 def list_domains_request_dataclass_to_proto(request: ListDomainsRequest) -> service_domain_pb2.ListDomainsRequest:
     return service_domain_pb2.ListDomainsRequest(page_size=request.page_size, next_page_token=request.next_page_token)
@@ -77,8 +73,9 @@ def proto_domain_configuration_do_dataclass(
     domain_configuration = DomainConfiguration(
         workflow_execution_retention_period_in_days=ms_to_days(domain_response.workflow_execution_retention_period.ToMilliseconds()),
         workflow_execution_retention_period=domain_response.workflow_execution_retention_period.ToMilliseconds(),
-        emit_metric=False,
-        archival_bucket_name='',
+        emit_metric=True,
+        archival_status=proto_archival_status_to_dataclass(domain_response.history_archival_status),
+        archival_bucket_name=domain_response.history_archival_uri,
         history_archival_status=proto_archival_status_to_dataclass(domain_response.history_archival_status),
         history_archival_uri=domain_response.history_archival_uri,
         visibility_archival_status=proto_archival_status_to_dataclass(domain_response.visibility_archival_status),

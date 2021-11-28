@@ -1162,11 +1162,11 @@ class DomainInfo:
 class DomainConfiguration:
     workflow_execution_retention_period_in_days: int = None
     workflow_execution_retention_period: int = None
-    # Deprecated
+    # Deprecated: not being used
     emit_metric: bool = None
-    # Deprecated
+    # Deprecated in favor of history_archival_uri
     archival_bucket_name: str = None
-    # Deprecated
+    # Deprecated in favor of history_archival_status
     archival_status: ArchivalStatus = None
     history_archival_status: ArchivalStatus = None
     history_archival_uri: str = ''
