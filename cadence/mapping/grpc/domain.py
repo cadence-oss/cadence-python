@@ -79,7 +79,10 @@ def proto_domain_configuration_do_dataclass(
         workflow_execution_retention_period=domain_response.workflow_execution_retention_period.ToMilliseconds(),
         emit_metric=False,
         archival_bucket_name='',
-        archival_status=proto_archival_status_to_dataclass(domain_response.history_archival_status),
+        history_archival_status=proto_archival_status_to_dataclass(domain_response.history_archival_status),
+        history_archival_uri=domain_response.history_archival_uri,
+        visibility_archival_status=proto_archival_status_to_dataclass(domain_response.visibility_archival_status),
+        visibility_archival_uri=domain_response.visibility_archival_uri,
         bad_binaries=proto_bad_binaries_to_dataclass(domain_response.bad_binaries),
     )
 
