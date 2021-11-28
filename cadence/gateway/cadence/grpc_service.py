@@ -47,7 +47,7 @@ class CadenceGrpcService(CadenceServiceInterface):
                 metadata=self.metadata,
                 timeout=self.timeout
             )
-            return (proto_list_domains_response_to_dataclass(response[0]), None) #TODO check how errors are process via tchannel
+            return proto_list_domains_response_to_dataclass(response[0]), None
         except grpc.RpcError as e:
             return None, process_error(e)
 
@@ -59,6 +59,6 @@ class CadenceGrpcService(CadenceServiceInterface):
                 metadata=self.metadata,
                 timeout=self.timeout
             )
-            return start_workflow_execution_response_to_dataclass(response[0]), None  #TODO check how errors are process via tchannel
+            return start_workflow_execution_response_to_dataclass(response[0]), None
         except grpc.RpcError as e:
             return None, process_error(e)
