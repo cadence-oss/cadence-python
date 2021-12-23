@@ -261,7 +261,7 @@ def create_start_workflow_request(workflow_client: WorkflowClient, wm: WorkflowM
                                   args: List) -> StartWorkflowExecutionRequest:
     start_request = StartWorkflowExecutionRequest()
     start_request.domain = workflow_client.domain
-    start_request.workflow_id = wm._workflow_id if wm._workflow_id else str(uuid4())
+    start_request.workflow_id = "957f2394-4dc0-48d6-aedd-a7085be67f0a"
     start_request.workflow_type = WorkflowType()
     start_request.workflow_type.name = wm._name
     start_request.task_list = TaskList()

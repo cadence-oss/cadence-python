@@ -4,18 +4,12 @@ import uber.cadence.api.v1.service_domain_pb2_grpc as service_domain_pb2_grpc
 import uber.cadence.api.v1.service_workflow_pb2_grpc as service_workflow_pb2_grpc
 from cadence.cadence_types import ListDomainsRequest, ListDomainsResponse, StartWorkflowExecutionRequest, \
     StartWorkflowExecutionResponse
-from cadence.errors import RPCError
 from cadence.gateway.cadence.interface import CadenceServiceInterface
+from cadence.grpc_errors import process_error
 from cadence.mapping.grpc.domain import \
     proto_list_domains_response_to_dataclass, list_domains_request_dataclass_to_proto
 from cadence.mapping.grpc.service_workflow import start_workflow_execution_request_dataclass_to_proto, start_workflow_execution_response_to_dataclass
 
-
-def process_error(e: grpc.RpcError) -> RPCError:
-    return RPCError(
-        message=e.details(),
-        code=e.code(),
-    )
 
 class CadenceGrpcService(CadenceServiceInterface):
     """
