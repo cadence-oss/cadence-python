@@ -1,12 +1,12 @@
 import uber.cadence.api.v1.service_domain_pb2 as service_domain_pb2
 from cadence.cadence_types import ListDomainsResponse, DescribeDomainResponse, DomainStatus, ArchivalStatus, \
     BadBinaryInfo, BadBinaries, ClusterReplicationConfiguration, ListDomainsRequest, DomainInfo, \
-    DomainConfiguration, DomainReplicationConfiguration
+    DomainConfiguration, DomainReplicationConfiguration, RegisterDomainRequest
 from uber.cadence.api.v1 import domain_pb2
 
 
 def ms_to_days(milliseconds: int) -> int:
-    return int(milliseconds / (1000*60*60*24))
+    return int(milliseconds / (1000 * 60 * 60 * 24))
 
 
 def list_domains_request_dataclass_to_proto(list_domains: ListDomainsRequest) -> service_domain_pb2.ListDomainsRequest:
@@ -16,7 +16,8 @@ def list_domains_request_dataclass_to_proto(list_domains: ListDomainsRequest) ->
     )
 
 
-def proto_list_domains_response_to_dataclass(list_domains: service_domain_pb2.ListDomainsResponse) -> ListDomainsResponse:
+def proto_list_domains_response_to_dataclass(
+        list_domains: service_domain_pb2.ListDomainsResponse) -> ListDomainsResponse:
     return ListDomainsResponse(
         domains=[proto_describe_domain_to_dataclass(domain) for domain in list_domains.domains],
         next_page_token=list_domains.next_page_token
@@ -67,7 +68,8 @@ def proto_domain_status_to_dataclass(domain_status: domain_pb2.DomainStatus) -> 
 def proto_domain_configuration_do_dataclass(
         domain_configuration: service_domain_pb2.DescribeDomainResponse) -> DomainConfiguration:
     return DomainConfiguration(
-        workflow_execution_retention_period_in_days=ms_to_days(domain_configuration.workflow_execution_retention_period.ToMilliseconds()),
+        workflow_execution_retention_period_in_days=ms_to_days(
+            domain_configuration.workflow_execution_retention_period.ToMilliseconds()),
         workflow_execution_retention_period=domain_configuration.workflow_execution_retention_period.ToMilliseconds(),
         emit_metric=False,
         archival_bucket_name='',
@@ -98,8 +100,15 @@ def proto_bad_binary_info_to_dataclass(bad_binary_info: domain_pb2.BadBinaryInfo
         created_time_nano=bad_binary_info.created_time.ToNanoseconds(),
     ) if bad_binary_info else None
 
+
 def proto_cluster_replication_configuration_to_metadata(
         cluster_replication_config: domain_pb2.ClusterReplicationConfiguration) -> ClusterReplicationConfiguration:
     return ClusterReplicationConfiguration(
         cluster_name=cluster_replication_config.cluster_name
     ) if cluster_replication_config else None
+
+
+def register_domain_request_dataclass_to_proto(request: RegisterDomainRequest) -> service_domain_pb2.RegisterDomainRequest:
+    register_domain = service_domain_pb2.RegisterDomainRequest(
+
+    )

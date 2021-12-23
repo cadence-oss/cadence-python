@@ -86,7 +86,7 @@ class WorkflowService:
         return self.cadence_service.start_workflow(request)
 
     def register_domain(self, request: RegisterDomainRequest) -> Tuple[None, object]:
-        return self.call_void("RegisterDomain", request)
+        return self.cadence_service.register_domain(request)
 
     def describe_domain(self, request: DescribeDomainRequest) -> Tuple[DescribeDomainResponse, object]:
         return self.call_return("DescribeDomain", request, DescribeDomainResponse)

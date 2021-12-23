@@ -3,11 +3,12 @@ import grpc
 import uber.cadence.api.v1.service_domain_pb2_grpc as service_domain_pb2_grpc
 import uber.cadence.api.v1.service_workflow_pb2_grpc as service_workflow_pb2_grpc
 from cadence.cadence_types import ListDomainsRequest, ListDomainsResponse, StartWorkflowExecutionRequest, \
-    StartWorkflowExecutionResponse
+    StartWorkflowExecutionResponse, RegisterDomainRequest
 from cadence.errors import RPCError
 from cadence.gateway.cadence.interface import CadenceServiceInterface
 from cadence.mapping.grpc.domain import \
-    proto_list_domains_response_to_dataclass, list_domains_request_dataclass_to_proto
+    proto_list_domains_response_to_dataclass, list_domains_request_dataclass_to_proto, \
+    register_domain_request_dataclass_to_proto
 from cadence.mapping.grpc.service_workflow import start_workflow_execution_request_dataclass_to_proto, start_workflow_execution_response_to_dataclass
 
 
@@ -60,5 +61,11 @@ class CadenceGrpcService(CadenceServiceInterface):
                 timeout=self.timeout
             )
             return start_workflow_execution_response_to_dataclass(response[0]), None
+        except grpc.RpcError as e:
+            return None, process_error(e)
+
+    def register_domain(self, request: RegisterDomainRequest) -> Tuple[None, object]:
+        grpc_request = register_domain_request_dataclass_to_proto(request)
+        try:
         except grpc.RpcError as e:
             return None, process_error(e)
