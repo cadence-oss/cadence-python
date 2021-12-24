@@ -35,7 +35,7 @@ PROTOCOL_GRPC = "grpc"
 
 class WorkflowService:
     @classmethod
-    def create(cls, host: str, port: int, timeout: int = None, protocol: str = "tchannel"):
+    def create(cls, host: str, port: int, timeout: int = None, protocol: str = PROTOCOL_TCHANNEL):
         connection = None
         gateway = None
 

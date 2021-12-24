@@ -2,6 +2,7 @@ import uber.cadence.api.v1.service_domain_pb2 as service_domain_pb2
 from cadence.cadence_types import ListDomainsResponse, DescribeDomainResponse, DomainStatus, ArchivalStatus, \
     BadBinaryInfo, BadBinaries, ClusterReplicationConfiguration, ListDomainsRequest, DomainInfo, \
     DomainConfiguration, DomainReplicationConfiguration, RegisterDomainRequest
+from cadence.mapping.grpc.common import duration_or_none
 from uber.cadence.api.v1 import domain_pb2
 
 
@@ -90,6 +91,15 @@ def proto_archival_status_to_dataclass(archival_status: domain_pb2.ArchivalStatu
         return ArchivalStatus(ArchivalStatus.INVALID)
 
 
+def archival_status_dataclass_to_proto(archival_status: ArchivalStatus) -> domain_pb2.ArchivalStatus:
+    if archival_status == ArchivalStatus.ENABLED:
+        return domain_pb2.ARCHIVAL_STATUS_ENABLED
+    elif archival_status == ArchivalStatus.DISABLED:
+        return domain_pb2.ARCHIVAL_STATUS_DISABLED
+    else:
+        return domain_pb2.ARCHIVAL_STATUS_INVALID
+
+
 def proto_bad_binaries_to_dataclass(bad_binaries: domain_pb2.BadBinaries) -> BadBinaries:
     return BadBinaries(
         binaries={key: proto_bad_binary_info_to_dataclass(value) for key, value in bad_binaries.binaries}
@@ -110,7 +120,27 @@ def proto_cluster_replication_configuration_to_metadata(
         cluster_name=cluster_replication_config.cluster_name
     ) if cluster_replication_config else None
 
+def cluster_replication_configuration_metadata_to_proto(
+        cluster_replication_config: ClusterReplicationConfiguration) -> domain_pb2.ClusterReplicationConfiguration:
+    return domain_pb2.ClusterReplicationConfiguration(
+        cluster_name=cluster_replication_config.cluster_name
+    ) if cluster_replication_config else None
 
-def register_domain_request_dataclass_to_proto(request: RegisterDomainRequest) -> service_domain_pb2.RegisterDomainRequest:
-    register_domain = service_domain_pb2.RegisterDomainRequest(
-    )
+
+def register_domain_request_dataclass_to_proto(register_domain: RegisterDomainRequest) -> service_domain_pb2.RegisterDomainRequest:
+    return service_domain_pb2.RegisterDomainRequest(
+        security_token=register_domain.security_token,
+        name=register_domain.name,
+        description=register_domain.description,
+        owner_email=register_domain.owner_email,
+        workflow_execution_retention_period=duration_or_none(register_domain.workflow_execution_retention_period_in_days),
+        clusters=[cluster_replication_configuration_metadata_to_proto(cluster) for cluster in register_domain.clusters],
+        active_cluster_name=register_domain.active_cluster_name,
+        data={key:value for key,value in register_domain.data.items()},
+        is_global_domain=register_domain.is_global_domain,
+        history_archival_status=archival_status_dataclass_to_proto(register_domain.archival_status),
+        history_archival_uri=register_domain.archival_bucket_name,
+        visibility_archival_status=archival_status_dataclass_to_proto(register_domain.visibility_archival_status),
+        visibility_archival_uri=register_domain.visibility_archival_uri
+    ) if register_domain else None
+

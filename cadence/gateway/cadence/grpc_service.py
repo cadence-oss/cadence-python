@@ -61,5 +61,11 @@ class CadenceGrpcService(CadenceServiceInterface):
     def register_domain(self, request: RegisterDomainRequest) -> Tuple[None, object]:
         grpc_request = register_domain_request_dataclass_to_proto(request)
         try:
+            self.domain.RegisterDomain.with_call(
+                grpc_request,
+                metadata=self.metadata,
+                timeout=self.timeout
+            )
+            return None, None
         except grpc.RpcError as e:
             return None, process_error(e)
