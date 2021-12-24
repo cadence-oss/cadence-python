@@ -66,16 +66,19 @@ def proto_domain_status_to_dataclass(domain_status: domain_pb2.DomainStatus) -> 
 
 
 def proto_domain_configuration_do_dataclass(
-        domain_configuration: service_domain_pb2.DescribeDomainResponse) -> DomainConfiguration:
+        domain_response: service_domain_pb2.DescribeDomainResponse) -> DomainConfiguration:
     return DomainConfiguration(
-        workflow_execution_retention_period_in_days=ms_to_days(
-            domain_configuration.workflow_execution_retention_period.ToMilliseconds()),
-        workflow_execution_retention_period=domain_configuration.workflow_execution_retention_period.ToMilliseconds(),
-        emit_metric=False,
-        archival_bucket_name='',
-        archival_status=proto_archival_status_to_dataclass(domain_configuration.history_archival_status),
-        bad_binaries=proto_bad_binaries_to_dataclass(domain_configuration.bad_binaries),
-    ) if domain_configuration else None
+        workflow_execution_retention_period_in_days=ms_to_days(domain_response.workflow_execution_retention_period.ToMilliseconds()),
+        workflow_execution_retention_period=domain_response.workflow_execution_retention_period.ToMilliseconds(),
+        emit_metric=True,
+        archival_status=proto_archival_status_to_dataclass(domain_response.history_archival_status),
+        archival_bucket_name=domain_response.history_archival_uri,
+        history_archival_status=proto_archival_status_to_dataclass(domain_response.history_archival_status),
+        history_archival_uri=domain_response.history_archival_uri,
+        visibility_archival_status=proto_archival_status_to_dataclass(domain_response.visibility_archival_status),
+        visibility_archival_uri=domain_response.visibility_archival_uri,
+        bad_binaries=proto_bad_binaries_to_dataclass(domain_response.bad_binaries),
+    ) if domain_response else None
 
 
 def proto_archival_status_to_dataclass(archival_status: domain_pb2.ArchivalStatus) -> ArchivalStatus:
@@ -110,5 +113,4 @@ def proto_cluster_replication_configuration_to_metadata(
 
 def register_domain_request_dataclass_to_proto(request: RegisterDomainRequest) -> service_domain_pb2.RegisterDomainRequest:
     register_domain = service_domain_pb2.RegisterDomainRequest(
-
     )
