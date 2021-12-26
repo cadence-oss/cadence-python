@@ -1,3 +1,5 @@
+from typing import Optional
+
 import uber.cadence.api.v1.service_domain_pb2 as service_domain_pb2
 from cadence.cadence_types import ListDomainsResponse, DescribeDomainResponse, DomainStatus, ArchivalStatus, \
     BadBinaryInfo, BadBinaries, ClusterReplicationConfiguration, ListDomainsRequest, DomainInfo, \
@@ -8,6 +10,10 @@ from uber.cadence.api.v1 import domain_pb2
 
 def ms_to_days(milliseconds: int) -> int:
     return int(milliseconds / (1000 * 60 * 60 * 24))
+
+
+def days_to_seconds(days: int) -> int:
+    return days * 24 * 60 * 60
 
 
 def list_domains_request_dataclass_to_proto(list_domains: ListDomainsRequest) -> service_domain_pb2.ListDomainsRequest:
@@ -82,7 +88,9 @@ def proto_domain_configuration_do_dataclass(
     ) if domain_response else None
 
 
-def proto_archival_status_to_dataclass(archival_status: domain_pb2.ArchivalStatus) -> ArchivalStatus:
+def proto_archival_status_to_dataclass(archival_status: domain_pb2.ArchivalStatus) -> Optional[ArchivalStatus]:
+    if archival_status is None:
+        return None
     if archival_status == domain_pb2.ARCHIVAL_STATUS_ENABLED:
         return ArchivalStatus(ArchivalStatus.ENABLED)
     elif archival_status == domain_pb2.ARCHIVAL_STATUS_DISABLED:
@@ -91,8 +99,8 @@ def proto_archival_status_to_dataclass(archival_status: domain_pb2.ArchivalStatu
         return ArchivalStatus(ArchivalStatus.INVALID)
 
 
-def archival_status_dataclass_to_proto(archival_status: ArchivalStatus) -> domain_pb2.ArchivalStatus:
-    if archival_status == ArchivalStatus.ENABLED:
+def archival_status_dataclass_to_proto(archival_status: ArchivalStatus) -> Optional[domain_pb2.ArchivalStatus.__class__]:
+    if archival_status == ArchivalStatus.ENABLED or archival_status is None:
         return domain_pb2.ARCHIVAL_STATUS_ENABLED
     elif archival_status == ArchivalStatus.DISABLED:
         return domain_pb2.ARCHIVAL_STATUS_DISABLED
@@ -133,7 +141,7 @@ def register_domain_request_dataclass_to_proto(register_domain: RegisterDomainRe
         name=register_domain.name,
         description=register_domain.description,
         owner_email=register_domain.owner_email,
-        workflow_execution_retention_period=duration_or_none(register_domain.workflow_execution_retention_period_in_days),
+        workflow_execution_retention_period=duration_or_none(days_to_seconds(register_domain.workflow_execution_retention_period_in_days)),
         clusters=[cluster_replication_configuration_metadata_to_proto(cluster) for cluster in register_domain.clusters],
         active_cluster_name=register_domain.active_cluster_name,
         data={key:value for key,value in register_domain.data.items()},
