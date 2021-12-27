@@ -1,8 +1,8 @@
 from abc import abstractmethod
-from typing import Tuple
+from typing import Tuple, Callable
 
 from cadence.cadence_types import ListDomainsRequest, ListDomainsResponse, StartWorkflowExecutionRequest, \
-    StartWorkflowExecutionResponse
+    StartWorkflowExecutionResponse, RegisterDomainRequest
 
 
 class CadenceServiceInterface:
@@ -13,4 +13,16 @@ class CadenceServiceInterface:
 
     @abstractmethod
     def start_workflow(self, request: StartWorkflowExecutionRequest) -> Tuple[StartWorkflowExecutionResponse, object]:
+        pass
+
+    @abstractmethod
+    def register_domain(self, request: RegisterDomainRequest) -> Tuple[None, object]:
+        pass
+
+    @abstractmethod
+    def close(self):
+        pass
+
+    @abstractmethod
+    def set_next_timeout_cb(self, cb: Callable):
         pass

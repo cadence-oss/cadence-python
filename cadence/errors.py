@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Optional
-
+import grpc
 
 @dataclass
 class BadRequestError(Exception):
@@ -19,14 +19,14 @@ class InternalServiceError(Exception):
 
 @dataclass
 class DomainAlreadyExistsError(Exception):
-    message: str
+    message: str = ""
 
 
 @dataclass
 class WorkflowExecutionAlreadyStartedError(Exception):
-    message: Optional[str]
-    startRequestId: Optional[str]
-    runId: Optional[str]
+    message: Optional[str] = ""
+    startRequestId: Optional[str] = ""
+    runId: Optional[str] = ""
 
     @property
     def start_request_id(self):
@@ -38,34 +38,58 @@ class WorkflowExecutionAlreadyStartedError(Exception):
 
 
 @dataclass
+class WorkflowExecutionAlreadyCompletedError(Exception):
+    message: Optional[str] = ""
+
+
+@dataclass
+class FeatureNotEnabledError(Exception):
+    featureFlag: Optional[str] = ""
+
+    @property
+    def feature_flag(self):
+        return self.featureFlag
+
+
+@dataclass
 class EntityNotExistsError(Exception):
-    message: str
+    message: str = ""
+    currentCluster: str = ""
+    activeCluster: str = ""
 
     def __str__(self):
         return self.message
 
+    @property
+    def current_cluster(self):
+        return self.currentCluster
+
+    @property
+    def active_cluster(self):
+        return self.activeCluster
+
 
 @dataclass
 class ServiceBusyError(Exception):
-    message: str
+    message: str = ""
 
 
 @dataclass
 class CancellationAlreadyRequestedError(Exception):
-    message: str
+    message: str = ""
 
 
 @dataclass
 class QueryFailedError(Exception):
-    message: str
+    message: str = ""
 
 
 @dataclass
 class DomainNotActiveError(Exception):
-    message: str
-    domainName: str
-    currentCluster: str
-    activeCluster: str
+    message: str = ""
+    domainName: str = ""
+    currentCluster: str = ""
+    activeCluster: str = ""
 
     @property
     def domain_name(self):
@@ -82,7 +106,7 @@ class DomainNotActiveError(Exception):
 
 @dataclass
 class LimitExceededError(Exception):
-    message: str
+    message: str = ""
 
 
 @dataclass
@@ -101,9 +125,9 @@ class RetryTaskError(Exception):
 
 @dataclass
 class ClientVersionNotSupportedError(Exception):
-    feature_version: str
-    client_impl: str
-    supported_versions: str
+    feature_version: str = ""
+    client_impl: str = ""
+    supported_versions: str = ""
 
 
 CADENCE_ERROR_FIELDS = {

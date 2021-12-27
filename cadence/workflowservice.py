@@ -35,7 +35,7 @@ PROTOCOL_GRPC = "grpc"
 
 class WorkflowService:
     @classmethod
-    def create(cls, host: str, port: int, timeout: int = None, protocol: str = "tchannel"):
+    def create(cls, host: str, port: int, timeout: int = None, protocol: str = PROTOCOL_TCHANNEL):
         connection = None
         gateway = None
 
@@ -86,7 +86,7 @@ class WorkflowService:
         return self.cadence_service.start_workflow(request)
 
     def register_domain(self, request: RegisterDomainRequest) -> Tuple[None, object]:
-        return self.call_void("RegisterDomain", request)
+        return self.cadence_service.register_domain(request)
 
     def describe_domain(self, request: DescribeDomainRequest) -> Tuple[DescribeDomainResponse, object]:
         return self.call_return("DescribeDomain", request, DescribeDomainResponse)
@@ -183,7 +183,7 @@ class WorkflowService:
         return self.call_return("DescribeTaskList", request, DescribeTaskListResponse)
 
     def close(self):
-        self.connection.close()
+        self.cadence_service.close()
 
     def set_next_timeout_cb(self, cb: Callable):
-        self.connection.set_next_timeout_cb(cb)
+        self.cadence_service.set_next_timeout_cb(cb)

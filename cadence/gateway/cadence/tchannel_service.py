@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Tuple
+from typing import Tuple, Callable
 
 import os
 import socket
@@ -11,7 +11,7 @@ from cadence.connection import TChannelConnection, ThriftFunctionCall
 from cadence.errors import find_error
 from cadence.conversions import copy_thrift_to_py, copy_py_to_thrift
 from cadence.cadence_types import ListDomainsRequest, ListDomainsResponse, StartWorkflowExecutionRequest, \
-    StartWorkflowExecutionResponse
+    StartWorkflowExecutionResponse, RegisterDomainRequest
 
 TCHANNEL_SERVICE = "cadence-frontend"
 
@@ -61,3 +61,12 @@ class CadenceTChannelService(CadenceServiceInterface):
 
     def start_workflow(self, request: StartWorkflowExecutionRequest) -> Tuple[StartWorkflowExecutionResponse, object]:
         return self.call_return("StartWorkflowExecution", request, StartWorkflowExecutionResponse)
+
+    def register_domain(self, request: RegisterDomainRequest) -> Tuple[None, object]:
+        return self.call_void("RegisterDomain", request)
+
+    def close(self):
+        self.connection.close()
+
+    def set_next_timeout_cb(self, cb: Callable):
+        self.connection.set_next_timeout_cb(cb)

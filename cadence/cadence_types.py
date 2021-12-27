@@ -1210,7 +1210,7 @@ class ClusterReplicationConfiguration:
 class DomainReplicationConfiguration:
     active_cluster_name: str = None
     clusters: List[ClusterReplicationConfiguration] = field(default_factory=list)
-    
+
 
 # noinspection PyPep8
 @dataclass
@@ -1227,7 +1227,11 @@ class RegisterDomainRequest:
     archival_status: ArchivalStatus = None
     archival_bucket_name: str = None
     is_global_domain: bool = None
-    
+    history_archival_status: ArchivalStatus = None
+    history_archival_uri: str = ""
+    visibility_archival_status: ArchivalStatus = None
+    visibility_archival_uri: str = ""
+
 
 # noinspection PyPep8
 @dataclass
