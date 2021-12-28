@@ -138,8 +138,10 @@ def register_domain_request_dataclass_to_proto(register_domain: RegisterDomainRe
         active_cluster_name=register_domain.active_cluster_name,
         data={key:value for key,value in register_domain.data.items()},
         is_global_domain=register_domain.is_global_domain,
+        # Default value is 0 (invalid), it doesn't accept nil
         history_archival_status=archival_status_dataclass_to_proto(register_domain.archival_status),
         history_archival_uri=register_domain.archival_bucket_name,
+        # Default value is 0 (invalid), it doesn't accept nil
         visibility_archival_status=archival_status_dataclass_to_proto(register_domain.visibility_archival_status),
         visibility_archival_uri=register_domain.visibility_archival_uri
     ) if register_domain else None
