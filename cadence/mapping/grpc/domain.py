@@ -13,7 +13,7 @@ def ms_to_days(milliseconds: int) -> int:
 
 
 def days_to_seconds(days: int) -> int:
-    return days * 24 * 60 * 60
+    return days * 24 * 60 * 60 if days else 0
 
 
 def list_domains_request_dataclass_to_proto(list_domains: ListDomainsRequest) -> service_domain_pb2.ListDomainsRequest:
@@ -85,6 +85,7 @@ def proto_domain_to_domain_configuration_dataclass(domain: domain_pb2.Domain) ->
     ) if domain else None
 
 
+# Default value if this is none?
 def proto_archival_status_to_dataclass(archival_status: Optional[domain_pb2.ArchivalStatus.__class__]) -> ArchivalStatus:
     if archival_status == domain_pb2.ARCHIVAL_STATUS_ENABLED:
         return ArchivalStatus(ArchivalStatus.ENABLED)
@@ -94,8 +95,9 @@ def proto_archival_status_to_dataclass(archival_status: Optional[domain_pb2.Arch
         return ArchivalStatus(ArchivalStatus.INVALID)
 
 
+# Default value if this is none?
 def archival_status_dataclass_to_proto(archival_status: Optional[ArchivalStatus]) -> domain_pb2.ArchivalStatus:
-    if archival_status == ArchivalStatus.ENABLED or archival_status is None:
+    if archival_status == ArchivalStatus.ENABLED:
         return domain_pb2.ARCHIVAL_STATUS_ENABLED
     elif archival_status == ArchivalStatus.DISABLED:
         return domain_pb2.ARCHIVAL_STATUS_DISABLED
@@ -122,6 +124,7 @@ def proto_cluster_replication_configuration_to_metadata(
     return ClusterReplicationConfiguration(
         cluster_name=cluster_replication_config.cluster_name
     ) if cluster_replication_config else None
+
 
 def cluster_replication_configuration_metadata_to_proto(
         cluster_replication_config: ClusterReplicationConfiguration) -> domain_pb2.ClusterReplicationConfiguration:
