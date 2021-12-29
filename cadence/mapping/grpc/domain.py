@@ -47,7 +47,7 @@ def proto_domain_to_domain_info_dataclass(domain: domain_pb2.Domain) -> DomainIn
         status=proto_domain_status_to_dataclass(domain.status),
         description=domain.description,
         owner_email=domain.owner_email,
-        data={key: value for key, value in domain.data.values()},
+        data={key: value for key, value in domain.data.items()},
         uuid=domain.id,
     ) if domain else None
 
@@ -59,20 +59,20 @@ def proto_domain_to_replication_configuration_dataclass(domain: domain_pb2.Domai
     ) if domain else None
 
 
-def proto_domain_status_to_dataclass(domain_status: domain_pb2.DomainStatus) -> DomainStatus:
+def proto_domain_status_to_dataclass(domain_status: Optional[domain_pb2.DomainStatus.__class__]) -> DomainStatus:
     if domain_status == domain_pb2.DOMAIN_STATUS_REGISTERED:
         return DomainStatus(DomainStatus.REGISTERED)
     elif domain_status == domain_pb2.DOMAIN_STATUS_DELETED:
         return DomainStatus(DomainStatus.DELETED)
     elif domain_status == domain_pb2.DOMAIN_STATUS_DEPRECATED:
         return DomainStatus(DomainStatus.DEPRECATED)
-    else:
+    else: #Should this value be the default value? (it is if it's null) Does the API always return something? Maybe null?
         return DomainStatus(DomainStatus.INVALID)
 
 
 def proto_domain_to_domain_configuration_dataclass(domain: domain_pb2.Domain) -> DomainConfiguration:
     return DomainConfiguration(
-        workflow_execution_retention_period_in_days=ms_to_days(domain.workflow_execution_retention_period.ToMilliseconds()),
+        workflow_execution_retention_period_in_days=ms_to_days(domain.workflow_execution_retention_period.ToMilliseconds()),#is this milliseconds?
         workflow_execution_retention_period=domain.workflow_execution_retention_period.ToMilliseconds(),
         emit_metric=True,
         archival_status=proto_archival_status_to_dataclass(domain.history_archival_status),
@@ -85,9 +85,7 @@ def proto_domain_to_domain_configuration_dataclass(domain: domain_pb2.Domain) ->
     ) if domain else None
 
 
-def proto_archival_status_to_dataclass(archival_status: domain_pb2.ArchivalStatus) -> Optional[ArchivalStatus]:
-    if archival_status is None:
-        return None
+def proto_archival_status_to_dataclass(archival_status: Optional[domain_pb2.ArchivalStatus.__class__]) -> ArchivalStatus:
     if archival_status == domain_pb2.ARCHIVAL_STATUS_ENABLED:
         return ArchivalStatus(ArchivalStatus.ENABLED)
     elif archival_status == domain_pb2.ARCHIVAL_STATUS_DISABLED:
@@ -96,7 +94,7 @@ def proto_archival_status_to_dataclass(archival_status: domain_pb2.ArchivalStatu
         return ArchivalStatus(ArchivalStatus.INVALID)
 
 
-def archival_status_dataclass_to_proto(archival_status: ArchivalStatus) -> Optional[domain_pb2.ArchivalStatus.__class__]:
+def archival_status_dataclass_to_proto(archival_status: Optional[ArchivalStatus]) -> domain_pb2.ArchivalStatus:
     if archival_status == ArchivalStatus.ENABLED or archival_status is None:
         return domain_pb2.ARCHIVAL_STATUS_ENABLED
     elif archival_status == ArchivalStatus.DISABLED:
@@ -107,7 +105,7 @@ def archival_status_dataclass_to_proto(archival_status: ArchivalStatus) -> Optio
 
 def proto_bad_binaries_to_dataclass(bad_binaries: domain_pb2.BadBinaries) -> BadBinaries:
     return BadBinaries(
-        binaries={key: proto_bad_binary_info_to_dataclass(value) for key, value in bad_binaries.binaries}
+        binaries={key: proto_bad_binary_info_to_dataclass(value) for key, value in bad_binaries.binaries.items()}
     ) if bad_binaries else None
 
 
@@ -141,7 +139,7 @@ def register_domain_request_dataclass_to_proto(register_domain: RegisterDomainRe
         workflow_execution_retention_period=duration_or_none(days_to_seconds(register_domain.workflow_execution_retention_period_in_days)),
         clusters=[cluster_replication_configuration_metadata_to_proto(cluster) for cluster in register_domain.clusters],
         active_cluster_name=register_domain.active_cluster_name,
-        data={key:value for key,value in register_domain.data.items()},
+        data={key: value for key,value in register_domain.data.items()},
         is_global_domain=register_domain.is_global_domain,
         # Default value is 0 (invalid), it doesn't accept nil
         history_archival_status=archival_status_dataclass_to_proto(register_domain.archival_status),

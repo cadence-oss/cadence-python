@@ -1,7 +1,11 @@
-from cadence.cadence_types import RegisterDomainRequest, ArchivalStatus, ListDomainsRequest
+from google.protobuf import duration_pb2
+
+from cadence.cadence_types import RegisterDomainRequest, ArchivalStatus, ListDomainsRequest, DomainStatus
 from cadence.mapping.grpc.domain import register_domain_request_dataclass_to_proto, days_to_seconds, ms_to_days, \
     list_domains_request_dataclass_to_proto, proto_list_domains_response_to_dataclass, \
-    proto_domain_to_describe_domain_response_dataclass
+    proto_domain_to_describe_domain_response_dataclass, proto_domain_to_domain_info_dataclass, \
+    proto_domain_to_replication_configuration_dataclass, cluster_replication_configuration_metadata_to_proto, \
+    proto_domain_status_to_dataclass, proto_domain_to_domain_configuration_dataclass
 from uber.cadence.api.v1 import domain_pb2, service_domain_pb2
 
 
@@ -55,6 +59,105 @@ def test_proto_domain_to_describe_domain_dataclass():
     assert describe_domain_response.failover_version == domain.failover_version
     assert describe_domain_response.replication_configuration.active_cluster_name == domain.active_cluster_name
     assert describe_domain_response.configuration.history_archival_uri == domain.history_archival_uri
+
+
+def test_proto_domain_to_domain_info_dataclass():
+    domain = domain_pb2.Domain(
+        name="the_domain",
+        description="the description",
+        owner_email="rodrigo@test.com",
+        data={"a": "a", "b": "b"},
+        id="123-456-789",
+    )
+
+    domain_info = proto_domain_to_domain_info_dataclass(domain)
+
+    assert domain_info.name == domain.name
+    assert domain_info.description == domain.description
+    assert domain_info.owner_email == domain.owner_email
+    assert domain_info.data == domain.data
+    assert domain_info.uuid == domain.id
+    assert domain_info.status == DomainStatus.INVALID
+
+
+def test_proto_domain_to_domain_info_dataclass_empty_data():
+    domain = domain_pb2.Domain(
+        data={},
+    )
+
+    domain_info = proto_domain_to_domain_info_dataclass(domain)
+    assert domain_info.data == domain.data
+
+
+def test_proto_domain_to_replication_configuration_dataclass_empty_clusters():
+    domain = domain_pb2.Domain(
+        active_cluster_name="The cluster",
+        clusters=[],
+    )
+
+    rc = proto_domain_to_replication_configuration_dataclass(domain)
+
+    assert rc.active_cluster_name == domain.active_cluster_name
+    assert len(rc.clusters) == len(domain.clusters)
+
+
+def test_proto_domain_to_replication_configuration_dataclass_():
+    domain = domain_pb2.Domain(
+        active_cluster_name="The cluster",
+        clusters=[domain_pb2.ClusterReplicationConfiguration(
+            cluster_name="cluster_a"
+        ), domain_pb2.ClusterReplicationConfiguration(
+            cluster_name="cluster_b"
+        )]
+    )
+
+    rc = proto_domain_to_replication_configuration_dataclass(domain)
+
+    assert rc.active_cluster_name == domain.active_cluster_name
+    assert len(rc.clusters) == len(domain.clusters)
+    assert rc.clusters[0].cluster_name == domain.clusters[0].cluster_name
+    assert rc.clusters[1].cluster_name == domain.clusters[1].cluster_name
+
+
+def test_cluster_replication_configuration_metadata_to_proto():
+    crr = domain_pb2.ClusterReplicationConfiguration(
+        cluster_name="cluster_b"
+    )
+
+    rc = cluster_replication_configuration_metadata_to_proto(crr)
+
+    assert rc.cluster_name == crr.cluster_name
+
+
+def test_proto_domain_status_to_dataclass():
+    assert proto_domain_status_to_dataclass(domain_pb2.DOMAIN_STATUS_DELETED) == DomainStatus.DELETED
+    assert proto_domain_status_to_dataclass(domain_pb2.DOMAIN_STATUS_REGISTERED) == DomainStatus.REGISTERED
+    assert proto_domain_status_to_dataclass(domain_pb2.DOMAIN_STATUS_DEPRECATED) == DomainStatus.DEPRECATED
+    assert proto_domain_status_to_dataclass(None) == DomainStatus.INVALID
+
+
+def test_proto_domain_to_domain_configuration_dataclass_all_populated():
+    domain = domain_pb2.Domain(
+        workflow_execution_retention_period=duration_pb2.Duration(seconds=604800),
+        history_archival_status=domain_pb2.ARCHIVAL_STATUS_ENABLED,
+        history_archival_uri="thehistoryuri",
+        visibility_archival_status=domain_pb2.ARCHIVAL_STATUS_DISABLED,
+        visibility_archival_uri="visibilityuri",
+        bad_binaries=domain_pb2.BadBinaries(
+            binaries={"key": domain_pb2.BadBinaryInfo(reason="thereason")}
+        )
+    )
+
+    domain_configuration = proto_domain_to_domain_configuration_dataclass(domain)
+
+    assert domain_configuration.workflow_execution_retention_period_in_days == 7
+    assert domain_configuration.workflow_execution_retention_period == domain.workflow_execution_retention_period.ToMilliseconds()
+    assert domain_configuration.emit_metric == True
+    assert domain_configuration.archival_status == ArchivalStatus.ENABLED
+    assert domain_configuration.archival_bucket_name == domain.history_archival_uri
+    assert domain_configuration.visibility_archival_uri == domain.visibility_archival_uri
+    assert domain_configuration.visibility_archival_status == ArchivalStatus.DISABLED
+    assert domain_configuration.bad_binaries.binaries["key"].reason == domain.bad_binaries.binaries["key"].reason
 
 
 def test_register_domain_request_dataclass_to_proto():
