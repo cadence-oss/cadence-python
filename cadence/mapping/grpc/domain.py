@@ -66,7 +66,7 @@ def proto_domain_status_to_dataclass(domain_status: Optional[domain_pb2.DomainSt
         return DomainStatus(DomainStatus.DELETED)
     elif domain_status == domain_pb2.DOMAIN_STATUS_DEPRECATED:
         return DomainStatus(DomainStatus.DEPRECATED)
-    else: #Should this value be the default value? (it is if it's null) Does the API always return something? Maybe null?
+    else:
         return DomainStatus(DomainStatus.INVALID)
 
 
@@ -85,7 +85,6 @@ def proto_domain_to_domain_configuration_dataclass(domain: domain_pb2.Domain) ->
     ) if domain else None
 
 
-# Default value if this is none?
 def proto_archival_status_to_dataclass(archival_status: Optional[domain_pb2.ArchivalStatus.__class__]) -> ArchivalStatus:
     if archival_status == domain_pb2.ARCHIVAL_STATUS_ENABLED:
         return ArchivalStatus(ArchivalStatus.ENABLED)
@@ -95,7 +94,6 @@ def proto_archival_status_to_dataclass(archival_status: Optional[domain_pb2.Arch
         return ArchivalStatus(ArchivalStatus.INVALID)
 
 
-# Default value if this is none?
 def archival_status_dataclass_to_proto(archival_status: Optional[ArchivalStatus]) -> domain_pb2.ArchivalStatus:
     if archival_status == ArchivalStatus.ENABLED:
         return domain_pb2.ARCHIVAL_STATUS_ENABLED
@@ -144,10 +142,8 @@ def register_domain_request_dataclass_to_proto(register_domain: RegisterDomainRe
         active_cluster_name=register_domain.active_cluster_name,
         data={key: value for key,value in register_domain.data.items()},
         is_global_domain=register_domain.is_global_domain,
-        # Default value is 0 (invalid), it doesn't accept nil
         history_archival_status=archival_status_dataclass_to_proto(register_domain.archival_status),
         history_archival_uri=register_domain.archival_bucket_name,
-        # Default value is 0 (invalid), it doesn't accept nil
         visibility_archival_status=archival_status_dataclass_to_proto(register_domain.visibility_archival_status),
         visibility_archival_uri=register_domain.visibility_archival_uri
     ) if register_domain else None
