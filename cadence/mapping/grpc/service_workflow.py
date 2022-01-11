@@ -1,3 +1,5 @@
+from typing import Optional
+
 from cadence.cadence_types import StartWorkflowExecutionRequest, WorkflowType, TaskList, TaskListKind, \
     WorkflowIdReusePolicy, RetryPolicy, Memo, SearchAttributes, Header, StartWorkflowExecutionResponse
 
@@ -46,7 +48,7 @@ def task_list_to_proto(task_list: TaskList) -> tasklist_pb2:
     ) if task_list else None
 
 
-def task_list_kind_to_proto(task_list_kind: TaskListKind) -> tasklist_pb2.TaskListKind:
+def task_list_kind_to_proto(task_list_kind: Optional[TaskListKind] = None) -> tasklist_pb2.TaskListKind:
     if task_list_kind == TaskListKind.STICKY:
         return tasklist_pb2.TASK_LIST_KIND_STICKY
     elif task_list_kind == TaskListKind.NORMAL:
@@ -62,7 +64,7 @@ def payload_to_proto(payload: bytes) -> common_pb2.Payload:
     ) if payload else None
 
 
-def workflow_id_reuse_policy_to_proto(workflow_id_reuse_policy: WorkflowIdReusePolicy) -> workflow_pb2.WorkflowIdReusePolicy:
+def workflow_id_reuse_policy_to_proto(workflow_id_reuse_policy: Optional[WorkflowIdReusePolicy] = None) -> workflow_pb2.WorkflowIdReusePolicy:
     if workflow_id_reuse_policy == WorkflowIdReusePolicy.TerminateIfRunning:
         return workflow_pb2.WORKFLOW_ID_REUSE_POLICY_TERMINATE_IF_RUNNING
     elif workflow_id_reuse_policy == WorkflowIdReusePolicy.AllowDuplicate:
@@ -88,17 +90,17 @@ def retry_policy_to_proto(retry_policy: RetryPolicy) -> common_pb2.RetryPolicy:
 
 def memo_to_proto(memo: Memo) -> common_pb2.Memo:
     return common_pb2.Memo(
-        fields={key: payload_to_proto(value) for key, value in memo.fields}
+        fields={key: payload_to_proto(value) for key, value in memo.fields.items()}
     ) if memo else None
 
 
 def search_attributes_to_proto(search_attributes: SearchAttributes) -> common_pb2.SearchAttributes:
     return common_pb2.SearchAttributes(
-        indexed_fields={key: payload_to_proto(value) for key, value in search_attributes.indexed_fields}
+        indexed_fields={key: payload_to_proto(value) for key, value in search_attributes.indexed_fields.items()}
     ) if search_attributes else None
 
 
 def header_to_proto(header: Header) -> common_pb2.Header:
     return common_pb2.Header(
-        fields={key: payload_to_proto(value) for key, value in header.fields}
+        fields={key: payload_to_proto(value) for key, value in header.fields.items()}
     ) if header else None
