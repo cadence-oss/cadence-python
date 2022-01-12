@@ -1,10 +1,11 @@
 import sys
 
 from cadence.cadence_types import RegisterDomainRequest
-from cadence.workflowservice import WorkflowService, PROTOCOL_GRPC
+from cadence.gateway.cadence.enums import DefaultPort, ConnectionProtocol
+from cadence.workflowservice import WorkflowService
 
 if __name__ == "__main__":
-    service = WorkflowService.create("localhost", 7833, 10000, PROTOCOL_GRPC)
+    service = WorkflowService.create("localhost", DefaultPort.GRPC, 10000, ConnectionProtocol.GRPC)
 
     domain = "test-domain-grpc"
 
@@ -14,6 +15,6 @@ if __name__ == "__main__":
 
     _, err = service.register_domain(register_domain_request)
     if err:
-        print(err)
+        print(f"error type {type(err)}")
     else:
         print(f"Registered domain {domain}")

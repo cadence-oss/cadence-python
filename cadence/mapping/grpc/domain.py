@@ -1,7 +1,7 @@
 import uber.cadence.api.v1.service_domain_pb2 as service_domain_pb2
 from cadence.cadence_types import ListDomainsResponse, DescribeDomainResponse, DomainStatus, ArchivalStatus, \
     BadBinaryInfo, BadBinaries, ClusterReplicationConfiguration, ListDomainsRequest, DomainInfo, \
-    DomainConfiguration, DomainReplicationConfiguration, RegisterDomainRequest
+    DomainConfiguration, DomainReplicationConfiguration, RegisterDomainRequest, DescribeDomainRequest
 from cadence.mapping.grpc.common import duration_or_none
 from uber.cadence.api.v1 import domain_pb2
 
@@ -23,6 +23,13 @@ def proto_list_domains_response_to_dataclass(
         domains=[proto_describe_domain_to_dataclass(domain) for domain in list_domains.domains],
         next_page_token=list_domains.next_page_token
     ) if list_domains else None
+
+
+def describe_domain_request_dataclass_to_proto(describe_domain_request: DescribeDomainRequest) -> service_domain_pb2.DescribeDomainRequest:
+    return service_domain_pb2.DescribeDomainRequest(
+        id=describe_domain_request.uuid,
+        name=describe_domain_request.name,
+    )
 
 
 def proto_describe_domain_to_dataclass(

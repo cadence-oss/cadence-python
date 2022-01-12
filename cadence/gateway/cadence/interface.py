@@ -2,7 +2,7 @@ from abc import abstractmethod
 from typing import Tuple, Callable
 
 from cadence.cadence_types import ListDomainsRequest, ListDomainsResponse, StartWorkflowExecutionRequest, \
-    StartWorkflowExecutionResponse, RegisterDomainRequest
+    StartWorkflowExecutionResponse, RegisterDomainRequest, DescribeDomainRequest, DescribeDomainResponse
 
 
 class CadenceServiceInterface:
@@ -17,6 +17,10 @@ class CadenceServiceInterface:
 
     @abstractmethod
     def register_domain(self, request: RegisterDomainRequest) -> Tuple[None, object]:
+        pass
+
+    @abstractmethod
+    def describe_domain(self, request: DescribeDomainRequest) -> Tuple[DescribeDomainResponse, object]:
         pass
 
     @abstractmethod
