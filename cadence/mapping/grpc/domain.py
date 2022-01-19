@@ -32,10 +32,15 @@ def proto_list_domains_response_to_dataclass(
 
 
 def describe_domain_request_dataclass_to_proto(describe_domain_request: DescribeDomainRequest) -> service_domain_pb2.DescribeDomainRequest:
-    return service_domain_pb2.DescribeDomainRequest(
+    a = service_domain_pb2.DescribeDomainRequest(
         id=describe_domain_request.uuid,
         name=describe_domain_request.name,
     )
+    return a
+
+
+def proto_describe_domain_response_to_describe_domain_response_dataclass(describe_domain_response: service_domain_pb2.DescribeDomainResponse) -> DescribeDomainResponse:
+    return proto_domain_to_describe_domain_response_dataclass(describe_domain_response.domain) if describe_domain_response else None
 
 
 def proto_domain_to_describe_domain_response_dataclass(domain: domain_pb2.Domain) -> DescribeDomainResponse:

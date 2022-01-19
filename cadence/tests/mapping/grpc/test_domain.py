@@ -1,14 +1,15 @@
 from google.protobuf import duration_pb2, timestamp_pb2
 
 from cadence.cadence_types import RegisterDomainRequest, ArchivalStatus, ListDomainsRequest, DomainStatus, \
-    ClusterReplicationConfiguration
+    ClusterReplicationConfiguration, DescribeDomainRequest
 from cadence.mapping.grpc.domain import register_domain_request_dataclass_to_proto, days_to_seconds, ms_to_days, \
     list_domains_request_dataclass_to_proto, proto_list_domains_response_to_dataclass, \
     proto_domain_to_describe_domain_response_dataclass, proto_domain_to_domain_info_dataclass, \
     proto_domain_to_replication_configuration_dataclass, cluster_replication_configuration_metadata_to_proto, \
     proto_domain_status_to_dataclass, proto_domain_to_domain_configuration_dataclass, \
     proto_archival_status_to_dataclass, archival_status_dataclass_to_proto, proto_bad_binaries_to_dataclass, \
-    proto_bad_binary_info_to_dataclass, proto_cluster_replication_configuration_to_metadata
+    proto_bad_binary_info_to_dataclass, proto_cluster_replication_configuration_to_metadata, \
+    proto_describe_domain_response_to_describe_domain_response_dataclass, describe_domain_request_dataclass_to_proto
 from uber.cadence.api.v1 import domain_pb2, service_domain_pb2
 
 
@@ -62,6 +63,46 @@ def test_proto_domain_to_describe_domain_dataclass():
     assert describe_domain_response.failover_version == domain.failover_version
     assert describe_domain_response.replication_configuration.active_cluster_name == domain.active_cluster_name
     assert describe_domain_response.configuration.history_archival_uri == domain.history_archival_uri
+
+
+def test_proto_describe_domain_response_to_describe_domain_response_dataclass():
+    ddr = service_domain_pb2.DescribeDomainResponse(
+        domain=domain_pb2.Domain(
+            name="the_domain",
+            history_archival_uri="the-uri",
+            active_cluster_name="cluster_test",
+            failover_version=12,
+            is_global_domain=True,
+        )
+    )
+
+    describe_domain_response = proto_describe_domain_response_to_describe_domain_response_dataclass(ddr)
+
+    assert describe_domain_response.domain_info.name == ddr.domain.name
+    assert describe_domain_response.is_global_domain == ddr.domain.is_global_domain
+    assert describe_domain_response.failover_version == ddr.domain.failover_version
+    assert describe_domain_response.replication_configuration.active_cluster_name == ddr.domain.active_cluster_name
+    assert describe_domain_response.configuration.history_archival_uri == ddr.domain.history_archival_uri
+
+
+def test_describe_domain_request_dataclass_to_proto():
+    ddr = DescribeDomainRequest(name="", uuid="uuid")
+    describe_domain_request = describe_domain_request_dataclass_to_proto(ddr)
+
+    assert describe_domain_request.name == ""
+    assert describe_domain_request.id == describe_domain_request.id
+
+    ddr = DescribeDomainRequest(name="name", uuid="")
+    describe_domain_request = describe_domain_request_dataclass_to_proto(ddr)
+
+    assert describe_domain_request.name == ddr.name
+    assert describe_domain_request.id == ""
+
+    ddr = DescribeDomainRequest(name="name", uuid="uuid")
+    describe_domain_request = describe_domain_request_dataclass_to_proto(ddr)
+
+    assert describe_domain_request.name == ddr.name
+    assert describe_domain_request.id == ""
 
 
 def test_proto_domain_to_domain_info_dataclass():

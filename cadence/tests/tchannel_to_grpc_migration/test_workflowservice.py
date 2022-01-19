@@ -28,4 +28,4 @@ class TestStartWorkflow(TestCase):
 
 
     def tearDown(self) -> None:
-        self.service.connection.close()
+        self.service.close()

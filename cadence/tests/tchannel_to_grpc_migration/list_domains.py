@@ -18,3 +18,5 @@ if __name__ == "__main__":
     for i in range(len(grpc_result.domains)):
         assert grpc_result.domains[i].domain_info.uuid == tchannel_result.domains[i].domain_info.uuid
         assert grpc_result.domains[i].domain_info.name == tchannel_result.domains[i].domain_info.name
+        print(grpc_result.domains[i].domain_info.uuid)
+        print(grpc_result.domains[i].domain_info.name)
