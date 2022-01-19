@@ -1,9 +1,9 @@
 import sys
 import logging
 from cadence.activity_method import activity_method
+from cadence.gateway.cadence.enums import ConnectionProtocol, DefaultPort
 from cadence.workerfactory import WorkerFactory
 from cadence.workflow import workflow_method, Workflow, WorkflowClient
-from cadence.workflowservice import PROTOCOL_GRPC
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -48,7 +48,7 @@ if __name__ == '__main__':
     worker.register_workflow_implementation_type(GreetingWorkflowImpl)
     factory.start()
 
-    client = WorkflowClient.new_client(domain=DOMAIN, protocol=PROTOCOL_GRPC, port=7833)
+    client = WorkflowClient.new_client(domain=DOMAIN, protocol=ConnectionProtocol.GRPC, port=DefaultPort.GRPC)
     greeting_workflow: GreetingWorkflow = client.new_workflow_stub(GreetingWorkflow)
     result = greeting_workflow.get_greeting("Python")
     print(result)

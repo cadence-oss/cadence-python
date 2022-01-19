@@ -3,7 +3,6 @@ import logging
 from cadence.activity_method import activity_method
 from cadence.workerfactory import WorkerFactory
 from cadence.workflow import workflow_method, Workflow, WorkflowClient
-from cadence.workflowservice import PROTOCOL_GRPC
 
 logging.basicConfig(level=logging.DEBUG)
 

@@ -5,6 +5,7 @@ from typing import Tuple, Callable
 import os
 import socket
 
+from cadence.gateway.cadence.enums import ConnectionProtocol, DefaultPort
 from cadence.gateway.cadence.grpc_service import CadenceGrpcService
 from cadence.gateway.cadence.interface import CadenceServiceInterface
 from cadence.gateway.cadence.tchannel_service import CadenceTChannelService
@@ -29,20 +30,17 @@ from cadence.cadence_types import PollForActivityTaskResponse, StartWorkflowExec
 
 TCHANNEL_SERVICE = "cadence-frontend"
 
-PROTOCOL_TCHANNEL = "tchannel"
-PROTOCOL_GRPC = "grpc"
-
 
 class WorkflowService:
     @classmethod
-    def create(cls, host: str, port: int, timeout: int = None, protocol: str = PROTOCOL_TCHANNEL):
+    def create(cls, host: str, port: DefaultPort.TCHANNEL, timeout: int = None, protocol: ConnectionProtocol = ConnectionProtocol.TCHANNEL):
         connection = None
         gateway = None
 
-        if protocol == PROTOCOL_TCHANNEL:
+        if protocol == ConnectionProtocol.TCHANNEL:
             connection = TChannelConnection.open(host, port, timeout=timeout)
             gateway = CadenceTChannelService(connection)
-        elif protocol == PROTOCOL_GRPC:
+        elif protocol == ConnectionProtocol.GRPC:
             gateway = CadenceGrpcService(host, port, timeout)
 
         return cls(connection, gateway)
@@ -89,7 +87,7 @@ class WorkflowService:
         return self.cadence_service.register_domain(request)
 
     def describe_domain(self, request: DescribeDomainRequest) -> Tuple[DescribeDomainResponse, object]:
-        return self.call_return("DescribeDomain", request, DescribeDomainResponse)
+        return self.cadence_service.describe_domain(request)
 
     def list_domains(self, request: ListDomainsRequest) -> Tuple[ListDomainsResponse, object]:
         return self.cadence_service.list_domains(request)

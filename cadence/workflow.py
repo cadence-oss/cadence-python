@@ -21,6 +21,7 @@ from cadence.errors import QueryFailedError
 from cadence.exception_handling import deserialize_exception
 from cadence.exceptions import WorkflowFailureException, ActivityFailureException, QueryRejectedException, \
     QueryFailureException
+from cadence.gateway.cadence.enums import ConnectionProtocol
 from cadence.workflowservice import WorkflowService
 
 
@@ -121,7 +122,8 @@ class WorkflowClient:
 
     @classmethod
     def new_client(cls, host: str = "localhost", port: int = 7933, domain: str = "",
-                   options: WorkflowClientOptions = None, timeout: int = DEFAULT_SOCKET_TIMEOUT_SECONDS, protocol: str = "tchannel") -> WorkflowClient:
+                   options: WorkflowClientOptions = None, timeout: int = DEFAULT_SOCKET_TIMEOUT_SECONDS,
+                   protocol: ConnectionProtocol = ConnectionProtocol.TCHANNEL) -> WorkflowClient:
         service = WorkflowService.create(host, port, timeout=timeout, protocol=protocol)
         return cls(service=service, domain=domain, options=options)
 
