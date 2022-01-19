@@ -11,7 +11,8 @@ from cadence.connection import TChannelConnection, ThriftFunctionCall
 from cadence.errors import find_error
 from cadence.conversions import copy_thrift_to_py, copy_py_to_thrift
 from cadence.cadence_types import ListDomainsRequest, ListDomainsResponse, StartWorkflowExecutionRequest, \
-    StartWorkflowExecutionResponse, RegisterDomainRequest, DescribeDomainRequest, DescribeDomainResponse
+    StartWorkflowExecutionResponse, RegisterDomainRequest, DescribeDomainRequest, DescribeDomainResponse, \
+    UpdateDomainRequest, UpdateDomainResponse
 
 TCHANNEL_SERVICE = "cadence-frontend"
 
@@ -67,6 +68,9 @@ class CadenceTChannelService(CadenceServiceInterface):
 
     def describe_domain(self, request: DescribeDomainRequest) -> Tuple[DescribeDomainResponse, object]:
         return self.call_return("DescribeDomain", request, DescribeDomainResponse)
+
+    def update_domain(self, request: UpdateDomainRequest) -> Tuple[UpdateDomainResponse, object]:
+        return self.call_return("UpdateDomain", request, UpdateDomainResponse)
 
     def close(self):
         self.connection.close()
