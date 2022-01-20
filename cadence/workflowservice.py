@@ -93,7 +93,7 @@ class WorkflowService:
         return self.cadence_service.list_domains(request)
 
     def update_domain(self, request: UpdateDomainRequest) -> Tuple[UpdateDomainResponse, object]:
-        return self.call_return("UpdateDomain", request, UpdateDomainResponse)
+        return self.cadence_service.update_domain(request)
 
     def deprecate_domain(self, request: DeprecateDomainRequest) -> Tuple[None, object]:
         return self.call_void("DeprecateDomain", request)

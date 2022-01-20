@@ -35,7 +35,7 @@ def process_error(e: grpc.RpcError) -> Exception:
         elif detail.Is(error_pb2.QueryFailedError.DESCRIPTOR):
             return QueryFailedError()
         elif detail.Is(error_pb2.ServiceBusyError.DESCRIPTOR):
-            return ServiceBusyError()
+            return ServiceBusyError(message=status.message)
         elif detail.Is(error_pb2.WorkflowExecutionAlreadyCompletedError.DESCRIPTOR):
             return WorkflowExecutionAlreadyCompletedError()
         elif detail.Is(error_pb2.WorkflowExecutionAlreadyStartedError.DESCRIPTOR):

@@ -29,8 +29,10 @@ class TestStartWorkflow(TestCase):
     def test_update_domain(self):
         register_request = RegisterDomainRequest()
         register_request.name = str(uuid4())
+        register_request.workflow_execution_retention_period_in_days = 1
         self.service.register_domain(register_request)
         request = UpdateDomainRequest()
+        request.failover_timeout = 10000
         request.name = register_request.name
         request.configuration = DomainConfiguration()
         request.configuration.workflow_execution_retention_period_in_days = 10
