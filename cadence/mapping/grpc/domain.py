@@ -1,6 +1,6 @@
 from typing import Optional
 
-from google.protobuf import timestamp_pb2, field_mask_pb2
+from google.protobuf import timestamp_pb2
 
 import uber.cadence.api.v1.service_domain_pb2 as service_domain_pb2
 from cadence.cadence_types import ListDomainsResponse, DescribeDomainResponse, DomainStatus, ArchivalStatus, \
@@ -83,7 +83,7 @@ def update_domain_request_dataclass_to_proto(
             proto.workflow_execution_retention_period.CopyFrom(duration_or_none(
                 days_to_seconds(update_domain_request.configuration.workflow_execution_retention_period_in_days)))
 
-        if update_domain_request.configuration.bad_binaries:
+        if update_domain_request.configuration.bad_binaries is not None:
             proto.update_mask.paths.append(DomainUpdateBadBinariesField)
             proto.bad_binaries.CopyFrom(bad_binaries_dataclass_to_proto(update_domain_request.configuration.bad_binaries))
 
@@ -93,7 +93,7 @@ def update_domain_request_dataclass_to_proto(
 
         if update_domain_request.configuration.archival_bucket_name:
             proto.update_mask.paths.append(DomainUpdateHistoryArchivalURIField)
-            proto.history_archival_uri = update_domain_request.configuration.visibility_archival_uri
+            proto.history_archival_uri = update_domain_request.configuration.archival_bucket_name
 
         if update_domain_request.configuration.visibility_archival_status is not None:
             proto.update_mask.paths.append(DomainUpdateVisibilityArchivalStatusField)
@@ -108,7 +108,7 @@ def update_domain_request_dataclass_to_proto(
             proto.update_mask.paths.append(DomainUpdateActiveClusterNameField)
             proto.active_cluster_name = update_domain_request.replication_configuration.active_cluster_name
 
-        if update_domain_request.replication_configuration.clusters:
+        if update_domain_request.replication_configuration.clusters and len(update_domain_request.replication_configuration.clusters):
             proto.update_mask.paths.append(DomainUpdateClustersField)
             proto.clusters.MergeFrom([cluster_replication_configuration_metadata_to_proto(cluster) for cluster in
                                       update_domain_request.replication_configuration.clusters])
