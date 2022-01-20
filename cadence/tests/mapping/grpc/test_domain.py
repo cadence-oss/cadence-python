@@ -1,7 +1,8 @@
 from google.protobuf import duration_pb2, timestamp_pb2
 
 from cadence.cadence_types import RegisterDomainRequest, ArchivalStatus, ListDomainsRequest, DomainStatus, \
-    ClusterReplicationConfiguration, DescribeDomainRequest
+    ClusterReplicationConfiguration, DescribeDomainRequest, UpdateDomainRequest, UpdateDomainInfo, DomainConfiguration, \
+    BadBinaries, BadBinaryInfo, DomainReplicationConfiguration
 from cadence.mapping.grpc.domain import register_domain_request_dataclass_to_proto, days_to_seconds, ms_to_days, \
     list_domains_request_dataclass_to_proto, proto_list_domains_response_to_dataclass, \
     proto_domain_to_describe_domain_response_dataclass, proto_domain_to_domain_info_dataclass, \
@@ -9,7 +10,8 @@ from cadence.mapping.grpc.domain import register_domain_request_dataclass_to_pro
     proto_domain_status_to_dataclass, proto_domain_to_domain_configuration_dataclass, \
     proto_archival_status_to_dataclass, archival_status_dataclass_to_proto, proto_bad_binaries_to_dataclass, \
     proto_bad_binary_info_to_dataclass, proto_cluster_replication_configuration_to_metadata, \
-    proto_describe_domain_response_to_describe_domain_response_dataclass, describe_domain_request_dataclass_to_proto
+    proto_describe_domain_response_to_describe_domain_response_dataclass, describe_domain_request_dataclass_to_proto, \
+    update_domain_request_dataclass_to_proto
 from uber.cadence.api.v1 import domain_pb2, service_domain_pb2
 
 
@@ -282,15 +284,6 @@ def test_proto_cluster_replication_configuration_to_metadata():
     assert crc.cluster_name == cluster_replication_configuration.cluster_name
 
 
-def test_cluster_replication_configuration_metadata_to_proto():
-    cluster_replication_configuration = ClusterReplicationConfiguration(
-        cluster_name="cluster_name"
-    )
-
-    crc = cluster_replication_configuration_metadata_to_proto(cluster_replication_configuration)
-    assert crc.cluster_name == cluster_replication_configuration.cluster_name
-
-
 def test_register_domain_request_dataclass_to_proto_all_populated():
     register_domain = RegisterDomainRequest()
     register_domain.description = "a"
@@ -326,3 +319,40 @@ def test_register_domain_request_dataclass_to_proto_min():
     assert proto.data == register_domain.data
     assert proto.history_archival_status == domain_pb2.ARCHIVAL_STATUS_INVALID
     assert proto.visibility_archival_status == domain_pb2.ARCHIVAL_STATUS_INVALID
+
+
+def test_update_domain_request_dataclass_to_proto():
+    update_domain_request = UpdateDomainRequest(
+        security_token="abcd",
+        name="name",
+        updated_info=UpdateDomainInfo(
+            description="description",
+            owner_email="owner_email",
+            data={"a": "a", "b": "b"},
+        ),
+        configuration=DomainConfiguration(
+            workflow_execution_retention_period_in_days=1,
+            archival_bucket_name="bucket",
+            archival_status=ArchivalStatus.ENABLED,
+            visibility_archival_status=ArchivalStatus.DISABLED,
+            visibility_archival_uri="uri",
+            bad_binaries=BadBinaries(
+                binaries={"a": BadBinaryInfo(
+                    reason="reason",
+                    operator="operator",
+                    created_time_nano=10000000,
+                )}
+            ),
+        ),
+        replication_configuration=DomainReplicationConfiguration(
+            active_cluster_name="cluster",
+            clusters=[ClusterReplicationConfiguration(cluster_name="cluster")]
+        ),
+        delete_bad_binary="delete",
+        failover_timeout=1000000,
+    )
+
+    proto = update_domain_request_dataclass_to_proto(update_domain_request)
+
+    print(proto.update_mask.ListFields())
+    assert len(proto.update_mask.paths) == 13
