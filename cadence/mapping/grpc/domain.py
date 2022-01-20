@@ -64,51 +64,54 @@ def update_domain_request_dataclass_to_proto(
         name=update_domain_request.name
     )
 
-    if update_domain_request.updated_info.description:
-        proto.update_mask.paths.append(DomainUpdateDescriptionField)
-        proto.description = update_domain_request.updated_info.description
+    if update_domain_request.updated_info is not None:
+        if update_domain_request.updated_info.description:
+            proto.update_mask.paths.append(DomainUpdateDescriptionField)
+            proto.description = update_domain_request.updated_info.description
 
-    if update_domain_request.updated_info.owner_email:
-        proto.update_mask.paths.append(DomainUpdateOwnerEmailField)
-        proto.owner_email = update_domain_request.updated_info.owner_email
+        if update_domain_request.updated_info.owner_email:
+            proto.update_mask.paths.append(DomainUpdateOwnerEmailField)
+            proto.owner_email = update_domain_request.updated_info.owner_email
 
-    if update_domain_request.updated_info.data:
-        proto.update_mask.paths.append(DomainUpdateDataField)
-        proto.data.update({key: value for key, value in update_domain_request.updated_info.data.items()})
+        if update_domain_request.updated_info.data:
+            proto.update_mask.paths.append(DomainUpdateDataField)
+            proto.data.update({key: value for key, value in update_domain_request.updated_info.data.items()})
 
-    if update_domain_request.configuration.workflow_execution_retention_period_in_days:
-        proto.update_mask.paths.append(DomainUpdateRetentionPeriodField)
-        proto.workflow_execution_retention_period.CopyFrom(duration_or_none(
-            days_to_seconds(update_domain_request.configuration.workflow_execution_retention_period_in_days)))
+    if update_domain_request.configuration is not None:
+        if update_domain_request.configuration.workflow_execution_retention_period_in_days:
+            proto.update_mask.paths.append(DomainUpdateRetentionPeriodField)
+            proto.workflow_execution_retention_period.CopyFrom(duration_or_none(
+                days_to_seconds(update_domain_request.configuration.workflow_execution_retention_period_in_days)))
 
-    if update_domain_request.configuration.bad_binaries:
-        proto.update_mask.paths.append(DomainUpdateBadBinariesField)
-        proto.bad_binaries.CopyFrom(bad_binaries_dataclass_to_proto(update_domain_request.configuration.bad_binaries))
+        if update_domain_request.configuration.bad_binaries:
+            proto.update_mask.paths.append(DomainUpdateBadBinariesField)
+            proto.bad_binaries.CopyFrom(bad_binaries_dataclass_to_proto(update_domain_request.configuration.bad_binaries))
 
-    if update_domain_request.configuration.archival_status is not None:
-        proto.update_mask.paths.append(DomainUpdateHistoryArchivalStatusField)
-        proto.history_archival_status = archival_status_dataclass_to_proto(update_domain_request.configuration.archival_status)
+        if update_domain_request.configuration.archival_status is not None:
+            proto.update_mask.paths.append(DomainUpdateHistoryArchivalStatusField)
+            proto.history_archival_status = archival_status_dataclass_to_proto(update_domain_request.configuration.archival_status)
 
-    if update_domain_request.configuration.archival_bucket_name:
-        proto.update_mask.paths.append(DomainUpdateHistoryArchivalURIField)
-        proto.history_archival_uri = update_domain_request.configuration.visibility_archival_uri
+        if update_domain_request.configuration.archival_bucket_name:
+            proto.update_mask.paths.append(DomainUpdateHistoryArchivalURIField)
+            proto.history_archival_uri = update_domain_request.configuration.visibility_archival_uri
 
-    if update_domain_request.configuration.visibility_archival_status is not None:
-        proto.update_mask.paths.append(DomainUpdateVisibilityArchivalStatusField)
-        proto.visibility_archival_status = archival_status_dataclass_to_proto(update_domain_request.configuration.visibility_archival_status)
+        if update_domain_request.configuration.visibility_archival_status is not None:
+            proto.update_mask.paths.append(DomainUpdateVisibilityArchivalStatusField)
+            proto.visibility_archival_status = archival_status_dataclass_to_proto(update_domain_request.configuration.visibility_archival_status)
 
-    if update_domain_request.configuration.visibility_archival_uri:
-        proto.update_mask.paths.append(DomainUpdateVisibilityArchivalURIField)
-        proto.visibility_archival_uri = update_domain_request.configuration.visibility_archival_uri
+        if update_domain_request.configuration.visibility_archival_uri:
+            proto.update_mask.paths.append(DomainUpdateVisibilityArchivalURIField)
+            proto.visibility_archival_uri = update_domain_request.configuration.visibility_archival_uri
 
-    if update_domain_request.replication_configuration.active_cluster_name:
-        proto.update_mask.paths.append(DomainUpdateActiveClusterNameField)
-        proto.active_cluster_name = update_domain_request.replication_configuration.active_cluster_name
+    if update_domain_request.replication_configuration is not None:
+        if update_domain_request.replication_configuration.active_cluster_name:
+            proto.update_mask.paths.append(DomainUpdateActiveClusterNameField)
+            proto.active_cluster_name = update_domain_request.replication_configuration.active_cluster_name
 
-    if update_domain_request.replication_configuration.clusters:
-        proto.update_mask.paths.append(DomainUpdateClustersField)
-        proto.clusters.MergeFrom([cluster_replication_configuration_metadata_to_proto(cluster) for cluster in
-                                  update_domain_request.replication_configuration.clusters])
+        if update_domain_request.replication_configuration.clusters:
+            proto.update_mask.paths.append(DomainUpdateClustersField)
+            proto.clusters.MergeFrom([cluster_replication_configuration_metadata_to_proto(cluster) for cluster in
+                                      update_domain_request.replication_configuration.clusters])
 
     if update_domain_request.delete_bad_binary:
         proto.update_mask.paths.append(DomainUpdateDeleteBadBinaryField)
