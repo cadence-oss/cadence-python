@@ -108,7 +108,7 @@ def update_domain_request_dataclass_to_proto(
             proto.update_mask.paths.append(DomainUpdateActiveClusterNameField)
             proto.active_cluster_name = update_domain_request.replication_configuration.active_cluster_name
 
-        if update_domain_request.replication_configuration.clusters and len(update_domain_request.replication_configuration.clusters):
+        if update_domain_request.replication_configuration.clusters is not None and len(update_domain_request.replication_configuration.clusters):
             proto.update_mask.paths.append(DomainUpdateClustersField)
             proto.clusters.MergeFrom([cluster_replication_configuration_metadata_to_proto(cluster) for cluster in
                                       update_domain_request.replication_configuration.clusters])

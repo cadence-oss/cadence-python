@@ -3,8 +3,8 @@ from uuid import uuid4
 import time
 
 from cadence.gateway.cadence.enums import DefaultPort, ConnectionProtocol
-from cadence.cadence_types import StartWorkflowExecutionRequest, TaskList, WorkflowType, \
-    RegisterDomainRequest, DescribeDomainRequest, UpdateDomainRequest, DomainConfiguration
+from cadence.cadence_types import RegisterDomainRequest, DescribeDomainRequest, \
+    UpdateDomainRequest, DomainConfiguration, DomainReplicationConfiguration
 from cadence.workflowservice import WorkflowService
 
 
@@ -29,6 +29,7 @@ class TestStartWorkflow(TestCase):
     def test_update_domain(self):
         register_request = RegisterDomainRequest()
         register_request.name = str(uuid4())
+        register_request.replication_configuration = DomainReplicationConfiguration()
         register_request.workflow_execution_retention_period_in_days = 1
         self.service.register_domain(register_request)
         request = UpdateDomainRequest()
@@ -36,6 +37,7 @@ class TestStartWorkflow(TestCase):
         request.name = register_request.name
         request.configuration = DomainConfiguration()
         request.configuration.workflow_execution_retention_period_in_days = 10
+        request.replication_configuration = DomainReplicationConfiguration()
         response, err = self.service.update_domain(request)
         self.assertIsNone(err)
         self.assertIsNotNone(response)
