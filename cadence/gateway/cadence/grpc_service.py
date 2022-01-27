@@ -3,13 +3,15 @@ import grpc
 import uber.cadence.api.v1.service_domain_pb2_grpc as service_domain_pb2_grpc
 import uber.cadence.api.v1.service_workflow_pb2_grpc as service_workflow_pb2_grpc
 from cadence.cadence_types import ListDomainsRequest, ListDomainsResponse, StartWorkflowExecutionRequest, \
-    StartWorkflowExecutionResponse, RegisterDomainRequest, DescribeDomainRequest, DescribeDomainResponse
+    StartWorkflowExecutionResponse, RegisterDomainRequest, DescribeDomainRequest, DescribeDomainResponse, \
+    UpdateDomainRequest, UpdateDomainResponse
 from cadence.gateway.cadence.interface import CadenceServiceInterface
 from cadence.grpc_errors import process_error
 from cadence.mapping.grpc.domain import \
     proto_list_domains_response_to_dataclass, list_domains_request_dataclass_to_proto, \
     register_domain_request_dataclass_to_proto, describe_domain_request_dataclass_to_proto, \
-    proto_describe_domain_response_to_describe_domain_response_dataclass
+    proto_describe_domain_response_to_describe_domain_response_dataclass, update_domain_request_dataclass_to_proto, \
+    proto_update_domain_response_to_dataclass
 from cadence.mapping.grpc.service_workflow import start_workflow_execution_request_dataclass_to_proto, start_workflow_execution_response_to_dataclass
 
 
@@ -81,5 +83,18 @@ class CadenceGrpcService(CadenceServiceInterface):
                 timeout=self.timeout
             )
             return proto_describe_domain_response_to_describe_domain_response_dataclass(response[0]), None
+        except grpc.RpcError as e:
+            return None, process_error(e)
+
+
+    def update_domain(self, request: UpdateDomainRequest) -> Tuple[UpdateDomainResponse, object]:
+        grpc_request = update_domain_request_dataclass_to_proto(request)
+        try:
+            response = self.domain.UpdateDomain.with_call(
+                grpc_request,
+                metadata=self.metadata,
+                timeout=self.timeout
+            )
+            return proto_update_domain_response_to_dataclass(response[0]), None
         except grpc.RpcError as e:
             return None, process_error(e)

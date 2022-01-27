@@ -1,9 +1,12 @@
 from typing import Optional
 
+from google.protobuf import timestamp_pb2
+
 import uber.cadence.api.v1.service_domain_pb2 as service_domain_pb2
 from cadence.cadence_types import ListDomainsResponse, DescribeDomainResponse, DomainStatus, ArchivalStatus, \
     BadBinaryInfo, BadBinaries, ClusterReplicationConfiguration, ListDomainsRequest, DomainInfo, \
-    DomainConfiguration, DomainReplicationConfiguration, RegisterDomainRequest, DescribeDomainRequest
+    DomainConfiguration, DomainReplicationConfiguration, RegisterDomainRequest, DescribeDomainRequest, \
+    UpdateDomainRequest, UpdateDomainResponse
 from cadence.mapping.grpc.common import duration_or_none
 from uber.cadence.api.v1 import domain_pb2
 
@@ -31,16 +34,112 @@ def proto_list_domains_response_to_dataclass(
     ) if list_domains else None
 
 
-def describe_domain_request_dataclass_to_proto(describe_domain_request: DescribeDomainRequest) -> service_domain_pb2.DescribeDomainRequest:
-    a = service_domain_pb2.DescribeDomainRequest(
+def describe_domain_request_dataclass_to_proto(
+        describe_domain_request: DescribeDomainRequest) -> service_domain_pb2.DescribeDomainRequest:
+    return service_domain_pb2.DescribeDomainRequest(
         id=describe_domain_request.uuid,
         name=describe_domain_request.name,
     )
-    return a
 
 
-def proto_describe_domain_response_to_describe_domain_response_dataclass(describe_domain_response: service_domain_pb2.DescribeDomainResponse) -> DescribeDomainResponse:
-    return proto_domain_to_describe_domain_response_dataclass(describe_domain_response.domain) if describe_domain_response else None
+DomainUpdateDescriptionField = "description"
+DomainUpdateOwnerEmailField = "owner_email"
+DomainUpdateDataField = "data"
+DomainUpdateRetentionPeriodField = "workflow_execution_retention_period"
+DomainUpdateBadBinariesField = "bad_binaries"
+DomainUpdateHistoryArchivalStatusField = "history_archival_status"
+DomainUpdateHistoryArchivalURIField = "history_archival_uri"
+DomainUpdateVisibilityArchivalStatusField = "visibility_archival_status"
+DomainUpdateVisibilityArchivalURIField = "visibility_archival_uri"
+DomainUpdateActiveClusterNameField = "active_cluster_name"
+DomainUpdateClustersField = "clusters"
+DomainUpdateDeleteBadBinaryField = "delete_bad_binary"
+DomainUpdateFailoverTimeoutField = "failover_timeout"
+
+
+def update_domain_request_dataclass_to_proto(
+        update_domain_request: UpdateDomainRequest) -> service_domain_pb2.UpdateDomainRequest:
+    proto = service_domain_pb2.UpdateDomainRequest(
+        security_token=update_domain_request.security_token,
+        name=update_domain_request.name
+    )
+
+    if update_domain_request.updated_info is not None:
+        if update_domain_request.updated_info.description:
+            proto.update_mask.paths.append(DomainUpdateDescriptionField)
+            proto.description = update_domain_request.updated_info.description
+
+        if update_domain_request.updated_info.owner_email:
+            proto.update_mask.paths.append(DomainUpdateOwnerEmailField)
+            proto.owner_email = update_domain_request.updated_info.owner_email
+
+        if update_domain_request.updated_info.data:
+            proto.update_mask.paths.append(DomainUpdateDataField)
+            proto.data.update({key: value for key, value in update_domain_request.updated_info.data.items()})
+
+    if update_domain_request.configuration is not None:
+        if update_domain_request.configuration.workflow_execution_retention_period_in_days:
+            proto.update_mask.paths.append(DomainUpdateRetentionPeriodField)
+            proto.workflow_execution_retention_period.CopyFrom(duration_or_none(
+                days_to_seconds(update_domain_request.configuration.workflow_execution_retention_period_in_days)))
+
+        if update_domain_request.configuration.bad_binaries is not None:
+            proto.update_mask.paths.append(DomainUpdateBadBinariesField)
+            proto.bad_binaries.CopyFrom(bad_binaries_dataclass_to_proto(update_domain_request.configuration.bad_binaries))
+
+        if update_domain_request.configuration.archival_status is not None:
+            proto.update_mask.paths.append(DomainUpdateHistoryArchivalStatusField)
+            proto.history_archival_status = archival_status_dataclass_to_proto(update_domain_request.configuration.archival_status)
+
+        if update_domain_request.configuration.archival_bucket_name:
+            proto.update_mask.paths.append(DomainUpdateHistoryArchivalURIField)
+            proto.history_archival_uri = update_domain_request.configuration.archival_bucket_name
+
+        if update_domain_request.configuration.visibility_archival_status is not None:
+            proto.update_mask.paths.append(DomainUpdateVisibilityArchivalStatusField)
+            proto.visibility_archival_status = archival_status_dataclass_to_proto(update_domain_request.configuration.visibility_archival_status)
+
+        if update_domain_request.configuration.visibility_archival_uri:
+            proto.update_mask.paths.append(DomainUpdateVisibilityArchivalURIField)
+            proto.visibility_archival_uri = update_domain_request.configuration.visibility_archival_uri
+
+    if update_domain_request.replication_configuration is not None:
+        if update_domain_request.replication_configuration.active_cluster_name:
+            proto.update_mask.paths.append(DomainUpdateActiveClusterNameField)
+            proto.active_cluster_name = update_domain_request.replication_configuration.active_cluster_name
+
+        if update_domain_request.replication_configuration.clusters is not None and len(update_domain_request.replication_configuration.clusters):
+            proto.update_mask.paths.append(DomainUpdateClustersField)
+            proto.clusters.MergeFrom([cluster_replication_configuration_metadata_to_proto(cluster) for cluster in
+                                      update_domain_request.replication_configuration.clusters])
+
+    if update_domain_request.delete_bad_binary:
+        proto.update_mask.paths.append(DomainUpdateDeleteBadBinaryField)
+        proto.delete_bad_binary = update_domain_request.delete_bad_binary
+
+    if update_domain_request.failover_timeout:
+        proto.update_mask.paths.append(DomainUpdateFailoverTimeoutField)
+        proto.failover_timeout.CopyFrom(duration_or_none(update_domain_request.failover_timeout))
+
+    return proto
+
+
+def proto_update_domain_response_to_dataclass(
+        update_domain_response: service_domain_pb2.UpdateDomainResponse) -> UpdateDomainResponse:
+    domain = update_domain_response.domain
+    return UpdateDomainResponse(
+        domain_info=proto_domain_to_domain_info_dataclass(domain),
+        configuration=proto_domain_to_domain_configuration_dataclass(domain),
+        replication_configuration=proto_domain_to_replication_configuration_dataclass(domain),
+        failover_version=domain.failover_version,
+        is_global_domain=domain.is_global_domain,
+    ) if domain else None
+
+
+def proto_describe_domain_response_to_describe_domain_response_dataclass(
+        describe_domain_response: service_domain_pb2.DescribeDomainResponse) -> DescribeDomainResponse:
+    return proto_domain_to_describe_domain_response_dataclass(
+        describe_domain_response.domain) if describe_domain_response else None
 
 
 def proto_domain_to_describe_domain_response_dataclass(domain: domain_pb2.Domain) -> DescribeDomainResponse:
@@ -84,7 +183,8 @@ def proto_domain_status_to_dataclass(domain_status: Optional[domain_pb2.DomainSt
 
 def proto_domain_to_domain_configuration_dataclass(domain: domain_pb2.Domain) -> DomainConfiguration:
     return DomainConfiguration(
-        workflow_execution_retention_period_in_days=ms_to_days(domain.workflow_execution_retention_period.ToMilliseconds()),#is this milliseconds?
+        workflow_execution_retention_period_in_days=ms_to_days(
+            domain.workflow_execution_retention_period.ToMilliseconds()),  # is this milliseconds?
         workflow_execution_retention_period=domain.workflow_execution_retention_period.ToMilliseconds(),
         emit_metric=True,
         archival_status=proto_archival_status_to_dataclass(domain.history_archival_status),
@@ -97,7 +197,8 @@ def proto_domain_to_domain_configuration_dataclass(domain: domain_pb2.Domain) ->
     ) if domain else None
 
 
-def proto_archival_status_to_dataclass(archival_status: Optional[domain_pb2.ArchivalStatus.__class__]) -> ArchivalStatus:
+def proto_archival_status_to_dataclass(
+        archival_status: Optional[domain_pb2.ArchivalStatus.__class__]) -> ArchivalStatus:
     if archival_status == domain_pb2.ARCHIVAL_STATUS_ENABLED:
         return ArchivalStatus(ArchivalStatus.ENABLED)
     elif archival_status == domain_pb2.ARCHIVAL_STATUS_DISABLED:
@@ -121,11 +222,25 @@ def proto_bad_binaries_to_dataclass(bad_binaries: domain_pb2.BadBinaries) -> Bad
     ) if bad_binaries else None
 
 
+def bad_binaries_dataclass_to_proto(bad_binaries: BadBinaries) -> domain_pb2.BadBinaries:
+    return domain_pb2.BadBinaries(
+        binaries={key: bad_binary_info_dataclass_to_proto(value) for key, value in bad_binaries.binaries.items()}
+    ) if bad_binaries else None
+
+
 def proto_bad_binary_info_to_dataclass(bad_binary_info: domain_pb2.BadBinaryInfo) -> BadBinaryInfo:
     return BadBinaryInfo(
         reason=bad_binary_info.reason,
         operator=bad_binary_info.operator,
         created_time_nano=bad_binary_info.created_time.ToNanoseconds(),
+    ) if bad_binary_info else None
+
+
+def bad_binary_info_dataclass_to_proto(bad_binary_info: BadBinaryInfo) -> domain_pb2.BadBinaryInfo:
+    return domain_pb2.BadBinaryInfo(
+        reason=bad_binary_info.reason,
+        operator=bad_binary_info.operator,
+        created_time=timestamp_pb2.Timestamp(nanos=bad_binary_info.created_time_nano),
     ) if bad_binary_info else None
 
 
@@ -143,20 +258,21 @@ def cluster_replication_configuration_metadata_to_proto(
     ) if cluster_replication_config else None
 
 
-def register_domain_request_dataclass_to_proto(register_domain: RegisterDomainRequest) -> service_domain_pb2.RegisterDomainRequest:
+def register_domain_request_dataclass_to_proto(
+        register_domain: RegisterDomainRequest) -> service_domain_pb2.RegisterDomainRequest:
     return service_domain_pb2.RegisterDomainRequest(
         security_token=register_domain.security_token,
         name=register_domain.name,
         description=register_domain.description,
         owner_email=register_domain.owner_email,
-        workflow_execution_retention_period=duration_or_none(days_to_seconds(register_domain.workflow_execution_retention_period_in_days)),
+        workflow_execution_retention_period=duration_or_none(
+            days_to_seconds(register_domain.workflow_execution_retention_period_in_days)),
         clusters=[cluster_replication_configuration_metadata_to_proto(cluster) for cluster in register_domain.clusters],
         active_cluster_name=register_domain.active_cluster_name,
-        data={key: value for key,value in register_domain.data.items()},
+        data={key: value for key, value in register_domain.data.items()},
         is_global_domain=register_domain.is_global_domain,
         history_archival_status=archival_status_dataclass_to_proto(register_domain.archival_status),
         history_archival_uri=register_domain.archival_bucket_name,
         visibility_archival_status=archival_status_dataclass_to_proto(register_domain.visibility_archival_status),
         visibility_archival_uri=register_domain.visibility_archival_uri
     ) if register_domain else None
-

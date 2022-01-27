@@ -1273,6 +1273,7 @@ class UpdateDomainRequest:
     replication_configuration: DomainReplicationConfiguration = None
     security_token: str = None
     delete_bad_binary: str = None
+    failover_timeout: int = None
     
 
 # noinspection PyPep8

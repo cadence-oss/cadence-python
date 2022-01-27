@@ -1,7 +1,8 @@
 from google.protobuf import duration_pb2, timestamp_pb2
 
 from cadence.cadence_types import RegisterDomainRequest, ArchivalStatus, ListDomainsRequest, DomainStatus, \
-    ClusterReplicationConfiguration, DescribeDomainRequest
+    ClusterReplicationConfiguration, DescribeDomainRequest, UpdateDomainRequest, UpdateDomainInfo, DomainConfiguration, \
+    BadBinaries, BadBinaryInfo, DomainReplicationConfiguration
 from cadence.mapping.grpc.domain import register_domain_request_dataclass_to_proto, days_to_seconds, ms_to_days, \
     list_domains_request_dataclass_to_proto, proto_list_domains_response_to_dataclass, \
     proto_domain_to_describe_domain_response_dataclass, proto_domain_to_domain_info_dataclass, \
@@ -9,7 +10,13 @@ from cadence.mapping.grpc.domain import register_domain_request_dataclass_to_pro
     proto_domain_status_to_dataclass, proto_domain_to_domain_configuration_dataclass, \
     proto_archival_status_to_dataclass, archival_status_dataclass_to_proto, proto_bad_binaries_to_dataclass, \
     proto_bad_binary_info_to_dataclass, proto_cluster_replication_configuration_to_metadata, \
-    proto_describe_domain_response_to_describe_domain_response_dataclass, describe_domain_request_dataclass_to_proto
+    proto_describe_domain_response_to_describe_domain_response_dataclass, describe_domain_request_dataclass_to_proto, \
+    update_domain_request_dataclass_to_proto, DomainUpdateDescriptionField, DomainUpdateOwnerEmailField, \
+    DomainUpdateDataField, DomainUpdateRetentionPeriodField, DomainUpdateHistoryArchivalStatusField, \
+    DomainUpdateHistoryArchivalURIField, DomainUpdateVisibilityArchivalStatusField, \
+    DomainUpdateVisibilityArchivalURIField, DomainUpdateActiveClusterNameField, DomainUpdateClustersField, \
+    DomainUpdateDeleteBadBinaryField, DomainUpdateFailoverTimeoutField, DomainUpdateBadBinariesField, \
+    proto_update_domain_response_to_dataclass
 from uber.cadence.api.v1 import domain_pb2, service_domain_pb2
 
 
@@ -282,15 +289,6 @@ def test_proto_cluster_replication_configuration_to_metadata():
     assert crc.cluster_name == cluster_replication_configuration.cluster_name
 
 
-def test_cluster_replication_configuration_metadata_to_proto():
-    cluster_replication_configuration = ClusterReplicationConfiguration(
-        cluster_name="cluster_name"
-    )
-
-    crc = cluster_replication_configuration_metadata_to_proto(cluster_replication_configuration)
-    assert crc.cluster_name == cluster_replication_configuration.cluster_name
-
-
 def test_register_domain_request_dataclass_to_proto_all_populated():
     register_domain = RegisterDomainRequest()
     register_domain.description = "a"
@@ -326,3 +324,123 @@ def test_register_domain_request_dataclass_to_proto_min():
     assert proto.data == register_domain.data
     assert proto.history_archival_status == domain_pb2.ARCHIVAL_STATUS_INVALID
     assert proto.visibility_archival_status == domain_pb2.ARCHIVAL_STATUS_INVALID
+
+
+def test_update_domain_request_dataclass_to_proto():
+    update_domain_request = UpdateDomainRequest(
+        security_token="abcd",
+        name="name",
+        updated_info=UpdateDomainInfo(
+            description="description",
+            owner_email="owner_email",
+            data={"a": "a", "b": "b"},
+        ),
+        configuration=DomainConfiguration(
+            workflow_execution_retention_period_in_days=1,
+            archival_bucket_name="bucket",
+            archival_status=ArchivalStatus.ENABLED,
+            visibility_archival_status=ArchivalStatus.DISABLED,
+            visibility_archival_uri="uri",
+            bad_binaries=BadBinaries(
+                binaries={"a": BadBinaryInfo(
+                    reason="reason",
+                    operator="operator",
+                    created_time_nano=10000000,
+                )}
+            ),
+        ),
+        replication_configuration=DomainReplicationConfiguration(
+            active_cluster_name="cluster",
+            clusters=[ClusterReplicationConfiguration(cluster_name="cluster")]
+        ),
+        delete_bad_binary="delete",
+        failover_timeout=1000000,
+    )
+
+    proto = update_domain_request_dataclass_to_proto(update_domain_request)
+
+    assert len(proto.update_mask.paths) == 13
+    assert DomainUpdateDescriptionField in proto.update_mask.paths
+    assert DomainUpdateOwnerEmailField in proto.update_mask.paths
+    assert DomainUpdateDataField in proto.update_mask.paths
+    assert DomainUpdateRetentionPeriodField in proto.update_mask.paths
+    assert DomainUpdateBadBinariesField in proto.update_mask.paths
+    assert DomainUpdateHistoryArchivalStatusField in proto.update_mask.paths
+    assert DomainUpdateHistoryArchivalURIField in proto.update_mask.paths
+    assert DomainUpdateVisibilityArchivalStatusField in proto.update_mask.paths
+    assert DomainUpdateVisibilityArchivalURIField in proto.update_mask.paths
+    assert DomainUpdateActiveClusterNameField in proto.update_mask.paths
+    assert DomainUpdateClustersField in proto.update_mask.paths
+    assert DomainUpdateDeleteBadBinaryField in proto.update_mask.paths
+    assert DomainUpdateFailoverTimeoutField in proto.update_mask.paths
+
+    assert proto.security_token == update_domain_request.security_token
+    assert proto.name == update_domain_request.name
+    assert proto.data == update_domain_request.updated_info.data
+    assert proto.description == update_domain_request.updated_info.description
+    assert proto.owner_email == update_domain_request.updated_info.owner_email
+    assert proto.workflow_execution_retention_period.ToSeconds() == 86400
+    assert len(proto.bad_binaries.binaries) == 1
+    assert "a" in proto.bad_binaries.binaries
+    assert proto.bad_binaries.binaries["a"].reason == update_domain_request.configuration.bad_binaries.binaries["a"].reason
+    assert proto.bad_binaries.binaries["a"].operator == update_domain_request.configuration.bad_binaries.binaries["a"].operator
+    assert proto.bad_binaries.binaries["a"].created_time.ToNanoseconds() == 10000000
+    assert proto.history_archival_status == domain_pb2.ARCHIVAL_STATUS_ENABLED
+    assert proto.history_archival_uri == update_domain_request.configuration.archival_bucket_name
+    assert proto.visibility_archival_status == domain_pb2.ARCHIVAL_STATUS_DISABLED
+    assert proto.visibility_archival_uri == update_domain_request.configuration.visibility_archival_uri
+    assert proto.active_cluster_name == update_domain_request.replication_configuration.active_cluster_name
+    assert len(proto.clusters) == 1
+    assert proto.clusters[0].cluster_name == update_domain_request.replication_configuration.clusters[0].cluster_name
+    assert proto.delete_bad_binary == update_domain_request.delete_bad_binary
+    assert proto.failover_timeout.ToSeconds() == 1000000
+
+
+def test_update_domain_request_dataclass_to_proto_almost_empty():
+    update_domain_request = UpdateDomainRequest(
+        security_token="abcd",
+        name="name",
+        updated_info=UpdateDomainInfo(
+            description="description"
+        )
+    )
+
+    proto = update_domain_request_dataclass_to_proto(update_domain_request)
+
+    assert len(proto.update_mask.paths) == 1
+    assert DomainUpdateDescriptionField in proto.update_mask.paths
+    assert DomainUpdateOwnerEmailField not in proto.update_mask.paths
+    assert DomainUpdateDataField not in proto.update_mask.paths
+    assert DomainUpdateRetentionPeriodField not in proto.update_mask.paths
+    assert DomainUpdateBadBinariesField not in proto.update_mask.paths
+    assert DomainUpdateHistoryArchivalStatusField not in proto.update_mask.paths
+    assert DomainUpdateHistoryArchivalURIField not in proto.update_mask.paths
+    assert DomainUpdateVisibilityArchivalStatusField not in proto.update_mask.paths
+    assert DomainUpdateVisibilityArchivalURIField not in proto.update_mask.paths
+    assert DomainUpdateActiveClusterNameField not in proto.update_mask.paths
+    assert DomainUpdateClustersField not in proto.update_mask.paths
+    assert DomainUpdateDeleteBadBinaryField not in proto.update_mask.paths
+    assert DomainUpdateFailoverTimeoutField not in proto.update_mask.paths
+
+    assert proto.security_token == update_domain_request.security_token
+    assert proto.name == update_domain_request.name
+
+
+def test_proto_update_domain_response_to_dataclass():
+    udr = service_domain_pb2.UpdateDomainResponse(
+        domain=domain_pb2.Domain(
+            name="the_domain",
+            history_archival_uri="the-uri",
+            active_cluster_name="cluster_test",
+            failover_version=12,
+            is_global_domain=True,
+        )
+    )
+    domain = udr.domain
+    describe_domain_response = proto_update_domain_response_to_dataclass(udr)
+
+    assert describe_domain_response.domain_info.name == domain.name
+    assert describe_domain_response.is_global_domain == domain.is_global_domain
+    assert describe_domain_response.failover_version == domain.failover_version
+    assert describe_domain_response.replication_configuration.active_cluster_name == domain.active_cluster_name
+    assert describe_domain_response.configuration.history_archival_uri == domain.history_archival_uri
