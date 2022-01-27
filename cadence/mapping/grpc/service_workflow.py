@@ -1,10 +1,12 @@
 from typing import Optional
 
 from cadence.cadence_types import StartWorkflowExecutionRequest, WorkflowType, TaskList, TaskListKind, \
-    WorkflowIdReusePolicy, RetryPolicy, Memo, SearchAttributes, Header, StartWorkflowExecutionResponse
+    WorkflowIdReusePolicy, RetryPolicy, Memo, SearchAttributes, Header, StartWorkflowExecutionResponse, \
+    GetWorkflowExecutionHistoryRequest, WorkflowExecution, HistoryEventFilterType, GetWorkflowExecutionHistoryResponse, \
+    History, HistoryEvent
 
 from cadence.mapping.grpc.common import duration_or_none
-from uber.cadence.api.v1 import service_workflow_pb2, common_pb2, tasklist_pb2, workflow_pb2
+from uber.cadence.api.v1 import service_workflow_pb2, common_pb2, tasklist_pb2, workflow_pb2, history_pb2
 
 
 def start_workflow_execution_request_dataclass_to_proto(
@@ -15,7 +17,8 @@ def start_workflow_execution_request_dataclass_to_proto(
         workflow_type=workflow_type_dataclass_to_proto(start_workflow_execution.workflow_type),
         task_list=task_list_to_proto(start_workflow_execution.task_list),
         input=payload_to_proto(start_workflow_execution.input),
-        execution_start_to_close_timeout=duration_or_none(start_workflow_execution.execution_start_to_close_timeout_seconds),
+        execution_start_to_close_timeout=duration_or_none(
+            start_workflow_execution.execution_start_to_close_timeout_seconds),
         task_start_to_close_timeout=duration_or_none(start_workflow_execution.task_start_to_close_timeout_seconds),
         identity=start_workflow_execution.identity,
         request_id=start_workflow_execution.request_id,
@@ -29,7 +32,8 @@ def start_workflow_execution_request_dataclass_to_proto(
     ) if start_workflow_execution else None
 
 
-def start_workflow_execution_response_to_dataclass(start_workflow_execution: service_workflow_pb2.StartWorkflowExecutionResponse) -> StartWorkflowExecutionResponse:
+def start_workflow_execution_response_to_dataclass(
+        start_workflow_execution: service_workflow_pb2.StartWorkflowExecutionResponse) -> StartWorkflowExecutionResponse:
     return StartWorkflowExecutionResponse(
         run_id=start_workflow_execution.run_id
     ) if start_workflow_execution else None
@@ -64,7 +68,8 @@ def payload_to_proto(payload: bytes) -> common_pb2.Payload:
     ) if payload else None
 
 
-def workflow_id_reuse_policy_to_proto(workflow_id_reuse_policy: Optional[WorkflowIdReusePolicy] = None) -> workflow_pb2.WorkflowIdReusePolicy:
+def workflow_id_reuse_policy_to_proto(workflow_id_reuse_policy: Optional[WorkflowIdReusePolicy] = None) \
+        -> workflow_pb2.WorkflowIdReusePolicy:
     if workflow_id_reuse_policy == WorkflowIdReusePolicy.TerminateIfRunning:
         return workflow_pb2.WORKFLOW_ID_REUSE_POLICY_TERMINATE_IF_RUNNING
     elif workflow_id_reuse_policy == WorkflowIdReusePolicy.AllowDuplicate:
@@ -104,3 +109,57 @@ def header_to_proto(header: Header) -> common_pb2.Header:
     return common_pb2.Header(
         fields={key: payload_to_proto(value) for key, value in header.fields.items()}
     ) if header else None
+
+
+def get_workflow_execution_history_request_dataclass_to_proto(gwehr: GetWorkflowExecutionHistoryRequest) \
+        -> service_workflow_pb2.GetWorkflowExecutionHistoryRequest:
+    return service_workflow_pb2.GetWorkflowExecutionHistoryRequest(
+        domain=gwehr.domain,
+        workflow_execution=workflow_execution_dataclass_to_proto(gwehr.execution),  # here,
+        page_size=gwehr.maximum_page_size,
+        next_page_token=gwehr.next_page_token,
+        wait_for_new_event=gwehr.wait_for_new_event,
+        history_event_filter_type=history_event_filter_type_dataclass_to_proto(gwehr.history_event_filter_type),
+        skip_archival=gwehr.skip_archival,
+    ) if gwehr else None
+
+
+def workflow_execution_dataclass_to_proto(workflow_execution: WorkflowExecution) -> common_pb2.WorkflowExecution:
+    return common_pb2.WorkflowExecution(
+        workflow_id=workflow_execution.workflow_id,
+        run_id=workflow_execution.run_id
+    ) if workflow_execution else None
+
+
+def history_event_filter_type_dataclass_to_proto(history_event_filter_type: HistoryEventFilterType) \
+        -> history_pb2.EventFilterType:
+    if history_event_filter_type == HistoryEventFilterType.ALL_EVENT:
+        return history_pb2.EVENT_FILTER_TYPE_ALL_EVENT
+    elif history_event_filter_type == history_event_filter_type.CLOSE_EVENT:
+        return history_pb2.EVENT_FILTER_TYPE_CLOSE_EVENT
+    else:
+        return history_pb2.EVENT_FILTER_TYPE_INVALID
+
+
+def proto_get_workflow_execution_history_response_to_dataclass(gwehr: service_workflow_pb2.GetWorkflowExecutionHistoryResponse) \
+        -> GetWorkflowExecutionHistoryResponse:
+    return GetWorkflowExecutionHistoryResponse(
+        history=proto_history_to_dataclass(gwehr.history),
+        raw_history=gwehr.raw_history,
+        next_page_token=gwehr.next_page_token,
+        archived=gwehr.archived
+    ) if gwehr else None
+
+
+def proto_history_to_dataclass(history: history_pb2.History) -> History:
+    return History(
+        events=[proto_history_event_to_dataclass(event) for event in history.events]
+    ) if history else None
+
+
+def proto_history_event_to_dataclass(history_event: history_pb2.HistoryEvent) -> HistoryEvent:
+    return HistoryEvent(
+        event_id=history_event.event_id,
+        timestamp=history_event.event_time.ToMilliseconds(),
+
+    ) if history_event else None

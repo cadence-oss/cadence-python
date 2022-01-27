@@ -3,7 +3,7 @@ from typing import Tuple, Callable
 
 from cadence.cadence_types import ListDomainsRequest, ListDomainsResponse, StartWorkflowExecutionRequest, \
     StartWorkflowExecutionResponse, RegisterDomainRequest, DescribeDomainRequest, DescribeDomainResponse, \
-    UpdateDomainRequest, UpdateDomainResponse
+    UpdateDomainRequest, UpdateDomainResponse, GetWorkflowExecutionHistoryRequest, GetWorkflowExecutionHistoryResponse
 
 
 class CadenceServiceInterface:
@@ -24,7 +24,13 @@ class CadenceServiceInterface:
     def describe_domain(self, request: DescribeDomainRequest) -> Tuple[DescribeDomainResponse, object]:
         pass
 
+    @abstractmethod
     def update_domain(self, request: UpdateDomainRequest) -> Tuple[UpdateDomainResponse, object]:
+        pass
+
+    @abstractmethod
+    def get_workflow_execution_history(self, request: GetWorkflowExecutionHistoryRequest) -> \
+            Tuple[GetWorkflowExecutionHistoryResponse, object]:
         pass
 
     @abstractmethod

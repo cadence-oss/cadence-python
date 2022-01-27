@@ -12,7 +12,7 @@ from cadence.errors import find_error
 from cadence.conversions import copy_thrift_to_py, copy_py_to_thrift
 from cadence.cadence_types import ListDomainsRequest, ListDomainsResponse, StartWorkflowExecutionRequest, \
     StartWorkflowExecutionResponse, RegisterDomainRequest, DescribeDomainRequest, DescribeDomainResponse, \
-    UpdateDomainRequest, UpdateDomainResponse
+    UpdateDomainRequest, UpdateDomainResponse, GetWorkflowExecutionHistoryRequest, GetWorkflowExecutionHistoryResponse
 
 TCHANNEL_SERVICE = "cadence-frontend"
 
@@ -71,6 +71,10 @@ class CadenceTChannelService(CadenceServiceInterface):
 
     def update_domain(self, request: UpdateDomainRequest) -> Tuple[UpdateDomainResponse, object]:
         return self.call_return("UpdateDomain", request, UpdateDomainResponse)
+
+    def get_workflow_execution_history(self, request: GetWorkflowExecutionHistoryRequest) -> \
+            Tuple[GetWorkflowExecutionHistoryResponse, object]:
+        return self.call_return("GetWorkflowExecutionHistory", request, GetWorkflowExecutionHistoryResponse)
 
     def close(self):
         self.connection.close()
