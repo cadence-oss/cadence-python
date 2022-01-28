@@ -3,7 +3,7 @@ from typing import Optional
 from cadence.cadence_types import StartWorkflowExecutionRequest, WorkflowType, TaskList, TaskListKind, \
     WorkflowIdReusePolicy, RetryPolicy, Memo, SearchAttributes, Header, StartWorkflowExecutionResponse, \
     GetWorkflowExecutionHistoryRequest, WorkflowExecution, HistoryEventFilterType, GetWorkflowExecutionHistoryResponse, \
-    History, HistoryEvent
+    History, HistoryEvent, EventType, WorkflowExecutionFailedEventAttributes
 
 from cadence.mapping.grpc.common import duration_or_none
 from uber.cadence.api.v1 import service_workflow_pb2, common_pb2, tasklist_pb2, workflow_pb2, history_pb2
@@ -157,9 +157,26 @@ def proto_history_to_dataclass(history: history_pb2.History) -> History:
     ) if history else None
 
 
-def proto_history_event_to_dataclass(history_event: history_pb2.HistoryEvent) -> HistoryEvent:
-    return HistoryEvent(
+def proto_history_event_to_dataclass(history_event: history_pb2.HistoryEvent) -> Optional[HistoryEvent]:
+    if not history_event:
+        return None
+
+    he = HistoryEvent(
         event_id=history_event.event_id,
         timestamp=history_event.event_time.ToMilliseconds(),
+        version=history_event.version,
+        task_id=history_event.task_id
+    )
 
-    ) if history_event else None
+    if history_event.workflow_execution_failed_event_attributes is not None:
+        he.event_type = EventType.WorkflowExecutionFailed
+        he.workflow_execution_failed_event_attributes = proto_workflow_execution_failed_event_attributes_to_dataclass(history_event.workflow_execution_started_event_attributes)
+
+
+def proto_workflow_execution_failed_event_attributes_to_dataclass(event_attributes: history_pb2.WorkflowExecutionFailedEventAttributes) \
+        -> WorkflowExecutionFailedEventAttributes:
+    return WorkflowExecutionFailedEventAttributes(
+        reason=event_attributes.failure.reason,
+        details=event_attributes.failure.details,
+        decision_task_completed_event_id=event_attributes.decision_task_completed_event_id,
+    ) if event_attributes else None
