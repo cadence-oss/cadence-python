@@ -1526,7 +1526,7 @@ class GetWorkflowExecutionHistoryRequest:
 @dataclass
 class GetWorkflowExecutionHistoryResponse:
     history: History = None
-    raw_history: DataBlob = None
+    raw_history: List[DataBlob] = None
     next_page_token: bytes = None
     archived: bool = None
     

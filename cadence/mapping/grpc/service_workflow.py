@@ -3,7 +3,7 @@ from typing import Optional
 from cadence.cadence_types import StartWorkflowExecutionRequest, WorkflowType, TaskList, TaskListKind, \
     WorkflowIdReusePolicy, RetryPolicy, Memo, SearchAttributes, Header, StartWorkflowExecutionResponse, \
     GetWorkflowExecutionHistoryRequest, WorkflowExecution, HistoryEventFilterType, GetWorkflowExecutionHistoryResponse, \
-    History, HistoryEvent, EventType, WorkflowExecutionFailedEventAttributes
+    History, HistoryEvent, EventType, WorkflowExecutionFailedEventAttributes, DataBlob, EncodingType
 
 from cadence.mapping.grpc.common import duration_or_none
 from uber.cadence.api.v1 import service_workflow_pb2, common_pb2, tasklist_pb2, workflow_pb2, history_pb2
@@ -131,21 +131,39 @@ def workflow_execution_dataclass_to_proto(workflow_execution: WorkflowExecution)
     ) if workflow_execution else None
 
 
-def history_event_filter_type_dataclass_to_proto(history_event_filter_type: HistoryEventFilterType) \
+def history_event_filter_type_dataclass_to_proto(history_event_filter_type: Optional[HistoryEventFilterType] = None) \
         -> history_pb2.EventFilterType:
     if history_event_filter_type == HistoryEventFilterType.ALL_EVENT:
         return history_pb2.EVENT_FILTER_TYPE_ALL_EVENT
-    elif history_event_filter_type == history_event_filter_type.CLOSE_EVENT:
+    elif history_event_filter_type == HistoryEventFilterType.CLOSE_EVENT:
         return history_pb2.EVENT_FILTER_TYPE_CLOSE_EVENT
     else:
         return history_pb2.EVENT_FILTER_TYPE_INVALID
+
+
+def proto_encoding_type_to_dataclass(encoding_type: Optional[common_pb2.EncodingType.__class__] = None) -> EncodingType:
+    if encoding_type == common_pb2.ENCODING_TYPE_PROTO3:
+        return EncodingType.Proto3
+    elif encoding_type == common_pb2.ENCODING_TYPE_JSON:
+        return EncodingType.JSON
+    elif encoding_type == common_pb2.ENCODING_TYPE_THRIFTRW:
+        return EncodingType.ThriftRW
+    else:
+        return EncodingType.Invalid
+
+
+def proto_datablob_to_dataclass(raw_history: common_pb2.DataBlob) -> DataBlob:
+    return DataBlob(
+        encoding_type=proto_encoding_type_to_dataclass(raw_history.encoding_type),
+        data=raw_history.data
+    )
 
 
 def proto_get_workflow_execution_history_response_to_dataclass(gwehr: service_workflow_pb2.GetWorkflowExecutionHistoryResponse) \
         -> GetWorkflowExecutionHistoryResponse:
     return GetWorkflowExecutionHistoryResponse(
         history=proto_history_to_dataclass(gwehr.history),
-        raw_history=gwehr.raw_history,
+        raw_history=[proto_datablob_to_dataclass(raw_history) for raw_history in gwehr.raw_history],
         next_page_token=gwehr.next_page_token,
         archived=gwehr.archived
     ) if gwehr else None
@@ -157,7 +175,7 @@ def proto_history_to_dataclass(history: history_pb2.History) -> History:
     ) if history else None
 
 
-def proto_history_event_to_dataclass(history_event: history_pb2.HistoryEvent) -> Optional[HistoryEvent]:
+def proto_history_event_to_dataclass(history_event: Optional[history_pb2.HistoryEvent] = None) -> Optional[HistoryEvent]:
     if not history_event:
         return None
 
@@ -170,8 +188,9 @@ def proto_history_event_to_dataclass(history_event: history_pb2.HistoryEvent) ->
 
     if history_event.workflow_execution_failed_event_attributes is not None:
         he.event_type = EventType.WorkflowExecutionFailed
-        he.workflow_execution_failed_event_attributes = proto_workflow_execution_failed_event_attributes_to_dataclass(history_event.workflow_execution_started_event_attributes)
+        he.workflow_execution_failed_event_attributes = proto_workflow_execution_failed_event_attributes_to_dataclass(history_event.workflow_execution_failed_event_attributes)
 
+    return he
 
 def proto_workflow_execution_failed_event_attributes_to_dataclass(event_attributes: history_pb2.WorkflowExecutionFailedEventAttributes) \
         -> WorkflowExecutionFailedEventAttributes:
