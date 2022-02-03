@@ -295,6 +295,7 @@ class PendingActivityState(IntEnum):
 class HistoryEventFilterType(IntEnum):
     ALL_EVENT = 0
     CLOSE_EVENT = 1
+    INVALID = 2
     
     @classmethod
     def value_for(cls, n: int) -> HistoryEventFilterType:
@@ -336,6 +337,9 @@ class IndexedValueType(IntEnum):
     
 class EncodingType(IntEnum):
     ThriftRW = 0
+    JSON = 1
+    Proto3 = 2
+    Invalid = 3
     
     @classmethod
     def value_for(cls, n: int) -> EncodingType:
@@ -1515,12 +1519,14 @@ class GetWorkflowExecutionHistoryRequest:
     next_page_token: bytes = None
     wait_for_new_event: bool = None
     history_event_filter_type: HistoryEventFilterType = None
+    skip_archival: bool = None
     
 
 # noinspection PyPep8
 @dataclass
 class GetWorkflowExecutionHistoryResponse:
     history: History = None
+    raw_history: List[DataBlob] = None
     next_page_token: bytes = None
     archived: bool = None
     

@@ -4,7 +4,7 @@ import uber.cadence.api.v1.service_domain_pb2_grpc as service_domain_pb2_grpc
 import uber.cadence.api.v1.service_workflow_pb2_grpc as service_workflow_pb2_grpc
 from cadence.cadence_types import ListDomainsRequest, ListDomainsResponse, StartWorkflowExecutionRequest, \
     StartWorkflowExecutionResponse, RegisterDomainRequest, DescribeDomainRequest, DescribeDomainResponse, \
-    UpdateDomainRequest, UpdateDomainResponse
+    UpdateDomainRequest, UpdateDomainResponse, GetWorkflowExecutionHistoryRequest, GetWorkflowExecutionHistoryResponse
 from cadence.gateway.cadence.interface import CadenceServiceInterface
 from cadence.grpc_errors import process_error
 from cadence.mapping.grpc.domain import \
@@ -12,7 +12,9 @@ from cadence.mapping.grpc.domain import \
     register_domain_request_dataclass_to_proto, describe_domain_request_dataclass_to_proto, \
     proto_describe_domain_response_to_describe_domain_response_dataclass, update_domain_request_dataclass_to_proto, \
     proto_update_domain_response_to_dataclass
-from cadence.mapping.grpc.service_workflow import start_workflow_execution_request_dataclass_to_proto, start_workflow_execution_response_to_dataclass
+from cadence.mapping.grpc.service_workflow import start_workflow_execution_request_dataclass_to_proto, \
+    start_workflow_execution_response_to_dataclass, get_workflow_execution_history_request_dataclass_to_proto, \
+    proto_get_workflow_execution_history_response_to_dataclass
 
 
 class CadenceGrpcService(CadenceServiceInterface):
@@ -73,7 +75,6 @@ class CadenceGrpcService(CadenceServiceInterface):
         except grpc.RpcError as e:
             return None, process_error(e)
 
-
     def describe_domain(self, request: DescribeDomainRequest) -> Tuple[DescribeDomainResponse, object]:
         grpc_request = describe_domain_request_dataclass_to_proto(request)
         try:
@@ -86,7 +87,6 @@ class CadenceGrpcService(CadenceServiceInterface):
         except grpc.RpcError as e:
             return None, process_error(e)
 
-
     def update_domain(self, request: UpdateDomainRequest) -> Tuple[UpdateDomainResponse, object]:
         grpc_request = update_domain_request_dataclass_to_proto(request)
         try:
@@ -96,5 +96,18 @@ class CadenceGrpcService(CadenceServiceInterface):
                 timeout=self.timeout
             )
             return proto_update_domain_response_to_dataclass(response[0]), None
+        except grpc.RpcError as e:
+            return None, process_error(e)
+
+    def get_workflow_execution_history(self, request: GetWorkflowExecutionHistoryRequest) -> \
+            Tuple[GetWorkflowExecutionHistoryResponse, object]:
+        grpc_request = get_workflow_execution_history_request_dataclass_to_proto(request)
+        try:
+            response = self.service_workflow.GetWorkflowExecutionHistory.with_call(
+                grpc_request,
+                metadata=self.metadata,
+                timeout=self.timeout
+            )
+            return proto_get_workflow_execution_history_response_to_dataclass(response[0]), None
         except grpc.RpcError as e:
             return None, process_error(e)
