@@ -3,7 +3,9 @@ from typing import Optional
 from cadence.cadence_types import StartWorkflowExecutionRequest, WorkflowType, TaskList, TaskListKind, \
     WorkflowIdReusePolicy, RetryPolicy, Memo, SearchAttributes, Header, StartWorkflowExecutionResponse, \
     GetWorkflowExecutionHistoryRequest, WorkflowExecution, HistoryEventFilterType, GetWorkflowExecutionHistoryResponse, \
-    History, HistoryEvent, EventType, WorkflowExecutionFailedEventAttributes, DataBlob, EncodingType
+    History, HistoryEvent, EventType, WorkflowExecutionFailedEventAttributes, DataBlob, EncodingType, \
+    WorkflowExecutionStartedEventAttributes, ParentExecutionInfo, Payload, ContinueAsNewInitiator, ResetPoints, \
+    ResetPointInfo
 
 from cadence.mapping.grpc.common import duration_or_none
 from uber.cadence.api.v1 import service_workflow_pb2, common_pb2, tasklist_pb2, workflow_pb2, history_pb2
@@ -159,7 +161,8 @@ def proto_datablob_to_dataclass(raw_history: common_pb2.DataBlob) -> DataBlob:
     )
 
 
-def proto_get_workflow_execution_history_response_to_dataclass(gwehr: service_workflow_pb2.GetWorkflowExecutionHistoryResponse) \
+def proto_get_workflow_execution_history_response_to_dataclass(
+        gwehr: service_workflow_pb2.GetWorkflowExecutionHistoryResponse) \
         -> GetWorkflowExecutionHistoryResponse:
     return GetWorkflowExecutionHistoryResponse(
         history=proto_history_to_dataclass(gwehr.history),
@@ -175,7 +178,8 @@ def proto_history_to_dataclass(history: history_pb2.History) -> History:
     ) if history else None
 
 
-def proto_history_event_to_dataclass(history_event: Optional[history_pb2.HistoryEvent] = None) -> Optional[HistoryEvent]:
+def proto_history_event_to_dataclass(history_event: Optional[history_pb2.HistoryEvent] = None) -> Optional[
+    HistoryEvent]:
     if not history_event:
         return None
 
@@ -186,13 +190,160 @@ def proto_history_event_to_dataclass(history_event: Optional[history_pb2.History
         task_id=history_event.task_id
     )
 
+    if history_event.workflow_execution_started_event_attributes is not None:
+        he.event_type = EventType.WorkflowExecutionStarted
+        he.workflow_execution_started_event_attributes = proto_workflow_execution_started_event_attributes_to_dataclass(
+            history_event.workflow_execution_started_event_attributes)
+
     if history_event.workflow_execution_failed_event_attributes is not None:
         he.event_type = EventType.WorkflowExecutionFailed
-        he.workflow_execution_failed_event_attributes = proto_workflow_execution_failed_event_attributes_to_dataclass(history_event.workflow_execution_failed_event_attributes)
+        he.workflow_execution_failed_event_attributes = proto_workflow_execution_failed_event_attributes_to_dataclass(
+            history_event.workflow_execution_failed_event_attributes)
 
     return he
 
-def proto_workflow_execution_failed_event_attributes_to_dataclass(event_attributes: history_pb2.WorkflowExecutionFailedEventAttributes) \
+
+def proto_workflow_execution_started_event_attributes_to_dataclass(
+        event_attributes: history_pb2.WorkflowExecutionStartedEventAttributes) \
+        -> WorkflowExecutionStartedEventAttributes:
+    return WorkflowExecutionStartedEventAttributes(
+        workflow_type=proto_workflow_type_to_dataclass(event_attributes.workflow_type),
+        parent_workflow_domain=event_attributes.parent_execution_info.domain_name,
+        parent_initiated_event_id=event_attributes.parent_execution_info.initiated_id,
+        # deprecated variable, filling for compatibility
+        parent_workflow_execution=WorkflowExecution(
+            run_id=event_attributes.parent_execution_info.workflow_execution.run_id,
+            workflow_id=event_attributes.parent_execution_info.workflow_execution.run_id,
+        ),
+        parent_execution_info=proto_parent_execution_info_to_dataclass(event_attributes.parent_execution_info),
+        task_list=proto_task_list_to_dataclass(event_attributes.task_list),
+        input=event_attributes.data,
+        execution_start_to_close_timeout_seconds=event_attributes.execution_start_to_close_timeout.ToSeconds(),
+        execution_start_to_close_timeout=event_attributes.execution_start_to_close_timeout.ToMilliseconds(),
+        task_start_to_close_timeout_seconds=event_attributes.task_start_to_close_timeout.ToSeconds(),
+        task_start_to_close_timeout=event_attributes.task_start_to_close_timeout.ToMilliseconds(),
+        continued_execution_run_id=event_attributes.continued_execution_run_id,
+        initiator=proto_continue_as_new_initiator_to_dataclass(event_attributes.initiator),
+        continued_failure_details=event_attributes.continued_failure.details,
+        continued_failure_reason=event_attributes.continued_failure.reason,
+        last_completion_result=event_attributes.last_completion_result.data,
+        original_execution_run_id=event_attributes.original_execution_run_id,
+        identity=event_attributes.identity,
+        first_execution_run_id=event_attributes.first_execution_run_id,
+        retry_policy=proto_retry_policy_to_dataclass(event_attributes.retry_policy),
+        attempt=event_attributes.attempt,
+        expiration_timestamp=event_attributes.expiration_time.ToDatetime(),
+        cron_schedule=event_attributes.cron_schedule,
+        first_decision_task_backoff_seconds=event_attributes.first_decision_task_backoff.ToSeconds(),
+        memo=proto_memo_to_dataclass(event_attributes.memo),
+        search_attributes=proto_search_attributes_to_dataclass(event_attributes.search_attributes),
+        prev_auto_reset_points=proto_reset_points_to_dataclass(event_attributes.prev_auto_reset_points),
+        header=proto_header_to_dataclass(event_attributes),
+    ) if event_attributes else None
+
+
+def proto_parent_execution_info_to_dataclass(
+        parent_execution_info: workflow_pb2.ParentExecutionInfo) -> Optional[ParentExecutionInfo]:
+    return ParentExecutionInfo(
+        domain_id=parent_execution_info.domain_id,
+        domain_name=parent_execution_info.domain_name,
+        workflow_execution=proto_workflow_execution_to_dataclass(parent_execution_info.workflow_execution),
+        initiated_id=parent_execution_info.initiated_id,
+    ) if parent_execution_info else None
+
+
+def proto_workflow_execution_to_dataclass(workflow_execution: common_pb2.WorkflowExecution) -> WorkflowExecution:
+    return WorkflowExecution(
+        workflow_id=workflow_execution.workflow_id,
+        run_id=workflow_execution.run_id,
+    ) if workflow_execution else None
+
+
+def proto_task_list_to_dataclass(task_list: tasklist_pb2.TaskList) -> TaskList:
+    return TaskList(
+        name=task_list.name,
+        kind=proto_task_list_kind_to_dataclass(task_list.kind),
+    ) if task_list else None
+
+
+def proto_task_list_kind_to_dataclass(task_list_kind: tasklist_pb2.TaskListKind) -> TaskListKind:
+    if task_list_kind == tasklist_pb2.TASK_LIST_KIND_STICKY:
+        return TaskListKind.STICKY
+    elif task_list_kind == tasklist_pb2.TASK_LIST_KIND_NORMAL:
+        return TaskListKind.NORMAL
+    else:
+        return TaskListKind.INVALID
+
+
+def proto_workflow_type_to_dataclass(workflow_type: common_pb2.WorkflowType) -> WorkflowType:
+    return WorkflowType(
+        name=workflow_type.name,
+    ) if workflow_type else None
+
+
+def proto_continue_as_new_initiator_to_dataclass(
+        continue_as_new_initiator: workflow_pb2.ContinueAsNewInitiator) -> ContinueAsNewInitiator:
+    if continue_as_new_initiator == workflow_pb2.CONTINUE_AS_NEW_INITIATOR_DECIDER:
+        return ContinueAsNewInitiator.Decider
+    elif continue_as_new_initiator == workflow_pb2.CONTINUE_AS_NEW_INITIATOR_RETRY_POLICY:
+        return ContinueAsNewInitiator.RetryPolicy
+    elif continue_as_new_initiator == workflow_pb2.CONTINUE_AS_NEW_INITIATOR_CRON_SCHEDULE:
+        return ContinueAsNewInitiator.CronSchedule
+    else:
+        return ContinueAsNewInitiator.Invalid
+
+
+def proto_retry_policy_to_dataclass(retry_policy: common_pb2.RetryPolicy) -> RetryPolicy:
+    return RetryPolicy(
+        initial_interval_in_seconds=retry_policy.initial_interval.ToSeconds(),
+        initial_interval=retry_policy.initial_interval.ToMilliseconds(),
+        maximum_interval_in_seconds=retry_policy.maximum_interval.ToSeconds(),
+        maximum_interval=retry_policy.maximum_interval.ToMilliseconds(),
+        maximum_attempts=retry_policy.maximum_attempts,
+        non_retriable_error_reasons=[reason for reason in retry_policy.non_retriable_error_reasons],
+        expiration_interval_in_seconds=retry_policy.expiration_interval.ToSeconds(),
+        expiration_interval=retry_policy.expiration_interval.ToMilliseconds(),
+    ) if retry_policy else None
+
+
+def proto_memo_to_dataclass(memo: common_pb2.Memo) -> Memo:
+    return Memo(
+        fields={key: value.data for key, value in memo.fields.items()},
+    ) if memo else None
+
+
+def proto_search_attributes_to_dataclass(search_attributes: common_pb2.SearchAttributes) -> SearchAttributes:
+    return SearchAttributes(
+        indexed_fields={key: value.data for key, value in search_attributes.indexed_fields.items()}
+    ) if search_attributes else None
+
+
+def proto_header_to_dataclass(header: common_pb2.Header) -> Header:
+    return Header(
+        fields={key: value.data for key, value in header.fields.items()}
+    ) if header else None
+
+
+def proto_reset_points_to_dataclass(reset_points: workflow_pb2.ResetPoints) -> ResetPoints:
+    return ResetPoints(
+        points=[proto_reset_points_info_to_dataclass(point) for point in reset_points.points]
+    ) if reset_points else None
+
+
+def proto_reset_points_info_to_dataclass(reset_points_info: workflow_pb2.ResetPointInfo) -> ResetPointInfo:
+    return ResetPointInfo(
+        binary_checksum=reset_points_info.binary_checksum,
+        first_decision_completed_id=reset_points_info.first_decision_completed_id,
+        created_time_nano=reset_points_info.created_time.ToNanoseconds(),
+        created_time=reset_points_info.created_time.ToDatetime(),
+        expiring_time_nano=reset_points_info.expiring_time.ToNanoseconds(),
+        expiring_time=reset_points_info.expiring_time.ToDatetime(),
+        resettable=reset_points_info.resettable,
+    )
+
+
+def proto_workflow_execution_failed_event_attributes_to_dataclass(
+        event_attributes: history_pb2.WorkflowExecutionFailedEventAttributes) \
         -> WorkflowExecutionFailedEventAttributes:
     return WorkflowExecutionFailedEventAttributes(
         reason=event_attributes.failure.reason,
