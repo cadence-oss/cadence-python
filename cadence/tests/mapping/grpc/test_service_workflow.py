@@ -1,4 +1,4 @@
-from google.protobuf import timestamp_pb2
+from google.protobuf import timestamp_pb2, duration_pb2
 
 from cadence.cadence_types import StartWorkflowExecutionRequest, WorkflowType, TaskList, TaskListKind, \
     WorkflowIdReusePolicy, ChildPolicy, RetryPolicy, Memo, SearchAttributes, Header, GetWorkflowExecutionHistoryRequest, \
@@ -9,7 +9,8 @@ from cadence.mapping.grpc.service_workflow import start_workflow_execution_reque
     search_attributes_to_proto, header_to_proto, get_workflow_execution_history_request_dataclass_to_proto, \
     history_event_filter_type_dataclass_to_proto, proto_get_workflow_execution_history_response_to_dataclass, \
     proto_encoding_type_to_dataclass, proto_datablob_to_dataclass, \
-    proto_workflow_execution_failed_event_attributes_to_dataclass, proto_history_event_to_dataclass
+    proto_workflow_execution_failed_event_attributes_to_dataclass, proto_history_event_to_dataclass, \
+    proto_workflow_execution_started_event_attributes_to_dataclass
 from uber.cadence.api.v1 import tasklist_pb2, workflow_pb2, service_workflow_pb2, history_pb2, common_pb2
 
 
@@ -268,7 +269,7 @@ def test_proto_history_event_to_dataclass_none():
     assert proto_history_event_to_dataclass() == None
 
 
-def test_proto_history_event_to_dataclass():
+def test_proto_history_event_workflow_execution_failed_event_attributes():
     he = history_pb2.HistoryEvent(
         event_id=100,
         event_time=timestamp_pb2.Timestamp(seconds=1),
@@ -294,3 +295,153 @@ def test_proto_history_event_to_dataclass():
     assert response.workflow_execution_failed_event_attributes.details == he.workflow_execution_failed_event_attributes.failure.details
     assert response.workflow_execution_failed_event_attributes.decision_task_completed_event_id == he.workflow_execution_failed_event_attributes.decision_task_completed_event_id
 
+
+def test_proto_workflow_execution_started_event_attributes_to_dataclass():
+    event_attributes = history_pb2.WorkflowExecutionStartedEventAttributes(
+        workflow_type=common_pb2.WorkflowType(
+            name="workflow_type",
+        ),
+        parent_execution_info=workflow_pb2.ParentExecutionInfo(
+            domain_id="domain_id",
+            domain_name="domain_name",
+            workflow_execution=common_pb2.WorkflowExecution(
+                run_id="run_id",
+                workflow_id="workflow_id",
+            ),
+            initiated_id=100,
+        ),
+        task_list=tasklist_pb2.TaskList(
+            name="task_list_name",
+            kind=tasklist_pb2.TASK_LIST_KIND_NORMAL,
+        ),
+        input=common_pb2.Payload(
+            data=bytes("this is my input", 'utf-8')
+        ),
+        execution_start_to_close_timeout=duration_pb2.Duration(
+            seconds=10000000
+        ),
+        task_start_to_close_timeout=duration_pb2.Duration(
+            seconds=10000000
+        ),
+        continued_execution_run_id="12345",
+        initiator=workflow_pb2.CONTINUE_AS_NEW_INITIATOR_CRON_SCHEDULE,
+        continued_failure=common_pb2.Failure(
+            reason="reason",
+            details=bytes("details", 'utf-8'),
+        ),
+        last_completion_result=common_pb2.Payload(
+            data=bytes("last_completion_result", 'utf-8')
+        ),
+        original_execution_run_id="12345",
+        identity="12345",
+        first_execution_run_id="12345",
+        retry_policy=common_pb2.RetryPolicy(
+            initial_interval=duration_pb2.Duration(
+                seconds=100000000
+            ),
+            backoff_coefficient=1.0,
+            maximum_interval=duration_pb2.Duration(
+                seconds=100000000
+            ),
+            maximum_attempts=10,
+            non_retryable_error_reasons=["a", "b"],
+            expiration_interval=duration_pb2.Duration(
+                seconds=100000000
+            ),
+        ),
+        attempt=20,
+        expiration_time=timestamp_pb2.Timestamp(
+            seconds=1647985091,
+        ),
+        cron_schedule="12345",
+        first_decision_task_backoff=duration_pb2.Duration(
+            seconds=1647985091,
+        ),
+        memo=common_pb2.Memo(
+            fields={
+                "a": common_pb2.Payload(
+                    data=bytes("memo_a", 'utf-8')
+                ),
+                "b": common_pb2.Payload(
+                    data=bytes("memo_b", 'utf-8')
+                )
+            }
+        ),
+        search_attributes=common_pb2.SearchAttributes(
+            indexed_fields={
+                "a": common_pb2.Payload(
+                    data=bytes("indexed_fields_a", 'utf-8')
+                ),
+                "b": common_pb2.Payload(
+                    data=bytes("indexed_fields_b", 'utf-8')
+                )
+            }
+        ),
+        prev_auto_reset_points=workflow_pb2.ResetPoints(
+            points=[
+                workflow_pb2.ResetPointInfo(
+                    binary_checksum="binary",
+                    run_id="run",
+                    first_decision_completed_id=1000,
+                    created_time=timestamp_pb2.Timestamp(
+                        seconds=1647985091
+                    ),
+                    expiring_time=timestamp_pb2.Timestamp(
+                        seconds=1647985091
+                    ),
+                    resettable=True,
+                )
+            ]
+        ),
+        header=common_pb2.Header(
+            fields={
+                "a": common_pb2.Payload(
+                    data=bytes("header_a", 'utf-8')
+                ),
+                "b": common_pb2.Payload(
+                    data=bytes("header_b", 'utf-8')
+                )
+            }
+        )
+    )
+    """
+WorkflowType workflow_type = 1;
+  ParentExecutionInfo parent_execution_info = 2;
+  TaskList task_list = 3;
+  Payload input = 4;
+  google.protobuf.Duration execution_start_to_close_timeout = 5;
+  google.protobuf.Duration task_start_to_close_timeout = 6;
+  string continued_execution_run_id = 7;
+  ContinueAsNewInitiator initiator = 8;
+  Failure continued_failure = 9;
+  Payload last_completion_result = 10;
+  // This is the previous runID of ContinueAsNew.
+  string original_execution_run_id = 11;
+  string identity = 12;
+  // This is the very first runID along the chain of ContinueAsNew and Reset.
+  string first_execution_run_id = 13;
+  RetryPolicy retry_policy = 14;
+  int32 attempt = 15;
+  google.protobuf.Timestamp expiration_time = 16;
+  string cron_schedule = 17;
+  google.protobuf.Duration first_decision_task_backoff = 18;
+  Memo memo = 19;
+  SearchAttributes search_attributes = 20;
+  ResetPoints prev_auto_reset_points = 21;
+  Header header = 22;
+"""
+    dataclass = proto_workflow_execution_started_event_attributes_to_dataclass(event_attributes)
+
+    assert event_attributes.workflow_type.name == dataclass.workflow_type.name
+    assert event_attributes.parent_execution_info.domain_id == dataclass.parent_execution_info.domain_id
+    assert event_attributes.parent_execution_info.domain_name == dataclass.parent_execution_info.domain_name
+    assert event_attributes.parent_execution_info.workflow_execution.workflow_id == dataclass.parent_execution_info.workflow_execution.workflow_id
+    assert event_attributes.parent_execution_info.workflow_execution.run_id == dataclass.parent_execution_info.workflow_execution.run_id
+    assert event_attributes.parent_execution_info.workflow_execution.workflow_id == dataclass.parent_workflow_execution.workflow_id
+    assert event_attributes.parent_execution_info.workflow_execution.run_id == dataclass.parent_workflow_execution.run_id
+    assert event_attributes.parent_execution_info.initiated_id == dataclass.parent_initiated_event_id
+    assert event_attributes.parent_execution_info.initiated_id == dataclass.parent_execution_info.initiated_id
+    task_list = event_attributes.task_list
+    assert task_list.name == dataclass.task_list.name
+    assert task_list.kind == tasklist_pb2.TASK_LIST_KIND_NORMAL
+    assert event_attributes.input.data.decode("utf-8") == "this is my input"
