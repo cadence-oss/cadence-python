@@ -234,6 +234,7 @@ def proto_workflow_execution_started_event_attributes_to_dataclass(
         attempt=event_attributes.attempt,
         expiration_timestamp=event_attributes.expiration_time.ToDatetime(),
         cron_schedule=event_attributes.cron_schedule,
+        first_decision_task_backoff=event_attributes.first_decision_task_backoff.ToMilliseconds(),
         first_decision_task_backoff_seconds=event_attributes.first_decision_task_backoff.ToSeconds(),
         memo=proto_memo_to_dataclass(event_attributes.memo),
         search_attributes=proto_search_attributes_to_dataclass(event_attributes.search_attributes),
@@ -266,7 +267,7 @@ def proto_task_list_to_dataclass(task_list: tasklist_pb2.TaskList) -> TaskList:
     ) if task_list else None
 
 
-def proto_task_list_kind_to_dataclass(task_list_kind: tasklist_pb2.TaskListKind) -> TaskListKind:
+def proto_task_list_kind_to_dataclass(task_list_kind: Optional[tasklist_pb2.TaskListKind.__class__] = None) -> TaskListKind:
     if task_list_kind == tasklist_pb2.TASK_LIST_KIND_STICKY:
         return TaskListKind.STICKY
     elif task_list_kind == tasklist_pb2.TASK_LIST_KIND_NORMAL:
@@ -282,7 +283,7 @@ def proto_workflow_type_to_dataclass(workflow_type: common_pb2.WorkflowType) -> 
 
 
 def proto_continue_as_new_initiator_to_dataclass(
-        continue_as_new_initiator: workflow_pb2.ContinueAsNewInitiator) -> ContinueAsNewInitiator:
+        continue_as_new_initiator: Optional[workflow_pb2.ContinueAsNewInitiator.__class__] = None) -> ContinueAsNewInitiator:
     if continue_as_new_initiator == workflow_pb2.CONTINUE_AS_NEW_INITIATOR_DECIDER:
         return ContinueAsNewInitiator.Decider
     elif continue_as_new_initiator == workflow_pb2.CONTINUE_AS_NEW_INITIATOR_RETRY_POLICY:
@@ -300,6 +301,7 @@ def proto_retry_policy_to_dataclass(retry_policy: common_pb2.RetryPolicy) -> Ret
         maximum_interval_in_seconds=retry_policy.maximum_interval.ToSeconds(),
         maximum_interval=retry_policy.maximum_interval.ToMilliseconds(),
         maximum_attempts=retry_policy.maximum_attempts,
+        backoff_coefficient=retry_policy.backoff_coefficient,
         non_retriable_error_reasons=[reason for reason in retry_policy.non_retryable_error_reasons],
         expiration_interval_in_seconds=retry_policy.expiration_interval.ToSeconds(),
         expiration_interval=retry_policy.expiration_interval.ToMilliseconds(),
@@ -333,6 +335,7 @@ def proto_reset_points_to_dataclass(reset_points: workflow_pb2.ResetPoints) -> R
 def proto_reset_points_info_to_dataclass(reset_points_info: workflow_pb2.ResetPointInfo) -> ResetPointInfo:
     return ResetPointInfo(
         binary_checksum=reset_points_info.binary_checksum,
+        run_id=reset_points_info.run_id,
         first_decision_completed_id=reset_points_info.first_decision_completed_id,
         created_time_nano=reset_points_info.created_time.ToNanoseconds(),
         created_time=reset_points_info.created_time.ToDatetime(),

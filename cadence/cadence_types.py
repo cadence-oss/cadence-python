@@ -656,6 +656,7 @@ class WorkflowExecutionStartedEventAttributes:
     attempt: int = None
     expiration_timestamp: int = None
     cron_schedule: str = None
+    first_decision_task_backoff: int = None
     first_decision_task_backoff_seconds: int = None
     memo: Memo = None
     search_attributes: SearchAttributes = None
