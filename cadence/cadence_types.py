@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import List, Dict
 from dataclasses import dataclass, field
 from enum import IntEnum
+from datetime import datetime
 
 
 # noinspection PyPep8
@@ -359,6 +360,7 @@ class ContinueAsNewInitiator(IntEnum):
     Decider = 0
     RetryPolicy = 1
     CronSchedule = 2
+    Invalid = 4
     
     @classmethod
     def value_for(cls, n: int) -> ContinueAsNewInitiator:
@@ -424,7 +426,15 @@ class TaskListMetadata:
 class WorkflowExecution:
     workflow_id: str = None
     run_id: str = None
-    
+
+
+@dataclass
+class ParentExecutionInfo:
+    domain_id: str = None
+    domain_name: str = None
+    workflow_execution: WorkflowExecution = None
+    initiated_id: int = None
+
 
 # noinspection PyPep8
 @dataclass
@@ -625,11 +635,14 @@ class WorkflowExecutionStartedEventAttributes:
     workflow_type: WorkflowType = None
     parent_workflow_domain: str = None
     parent_workflow_execution: WorkflowExecution = None
+    parent_execution_info: ParentExecutionInfo = None
     parent_initiated_event_id: int = None
     task_list: TaskList = None
     input: bytes = None
     execution_start_to_close_timeout_seconds: int = None
+    execution_start_to_close_timeout: int = None
     task_start_to_close_timeout_seconds: int = None
+    task_start_to_close_timeout: int = None
     child_policy: ChildPolicy = None
     continued_execution_run_id: str = None
     initiator: ContinueAsNewInitiator = None
@@ -643,6 +656,7 @@ class WorkflowExecutionStartedEventAttributes:
     attempt: int = None
     expiration_timestamp: int = None
     cron_schedule: str = None
+    first_decision_task_backoff: int = None
     first_decision_task_backoff_seconds: int = None
     memo: Memo = None
     search_attributes: SearchAttributes = None
@@ -663,7 +677,9 @@ class ResetPointInfo:
     run_id: str = None
     first_decision_completed_id: int = None
     created_time_nano: int = None
+    created_time: datetime = None
     expiring_time_nano: int = None
+    expiring_time: datetime = None
     resettable: bool = None
     
 
@@ -1827,11 +1843,14 @@ class PollerInfo:
 @dataclass
 class RetryPolicy:
     initial_interval_in_seconds: int = None
+    initial_interval: int = None
     backoff_coefficient: float = None
     maximum_interval_in_seconds: int = None
+    maximum_interval: int = None
     maximum_attempts: int = None
     non_retriable_error_reasons: List[str] = field(default_factory=list)
     expiration_interval_in_seconds: int = None
+    expiration_interval: int = None
     
 
 # noinspection PyPep8
@@ -1848,3 +1867,9 @@ class HistoryBranch:
     tree_id: str = None
     branch_id: str = None
     ancestors: List[HistoryBranchRange] = field(default_factory=list)
+
+
+# noinspection PyPep8
+@dataclass
+class Payload:
+    data: bytes = None

@@ -1,15 +1,17 @@
-from google.protobuf import timestamp_pb2
+from google.protobuf import timestamp_pb2, duration_pb2
 
 from cadence.cadence_types import StartWorkflowExecutionRequest, WorkflowType, TaskList, TaskListKind, \
     WorkflowIdReusePolicy, ChildPolicy, RetryPolicy, Memo, SearchAttributes, Header, GetWorkflowExecutionHistoryRequest, \
-    WorkflowExecution, HistoryEventFilterType, EncodingType, EventType
+    WorkflowExecution, HistoryEventFilterType, EncodingType, EventType, ContinueAsNewInitiator
 from cadence.mapping.grpc.service_workflow import start_workflow_execution_request_dataclass_to_proto, \
     start_workflow_execution_response_to_dataclass, workflow_type_dataclass_to_proto, task_list_to_proto, \
     task_list_kind_to_proto, payload_to_proto, workflow_id_reuse_policy_to_proto, retry_policy_to_proto, memo_to_proto, \
     search_attributes_to_proto, header_to_proto, get_workflow_execution_history_request_dataclass_to_proto, \
     history_event_filter_type_dataclass_to_proto, proto_get_workflow_execution_history_response_to_dataclass, \
     proto_encoding_type_to_dataclass, proto_datablob_to_dataclass, \
-    proto_workflow_execution_failed_event_attributes_to_dataclass, proto_history_event_to_dataclass
+    proto_workflow_execution_failed_event_attributes_to_dataclass, proto_history_event_to_dataclass, \
+    proto_workflow_execution_started_event_attributes_to_dataclass, proto_task_list_kind_to_dataclass, \
+    proto_continue_as_new_initiator_to_dataclass
 from uber.cadence.api.v1 import tasklist_pb2, workflow_pb2, service_workflow_pb2, history_pb2, common_pb2
 
 
@@ -268,7 +270,7 @@ def test_proto_history_event_to_dataclass_none():
     assert proto_history_event_to_dataclass() == None
 
 
-def test_proto_history_event_to_dataclass():
+def test_proto_history_event_workflow_execution_failed_event_attributes():
     he = history_pb2.HistoryEvent(
         event_id=100,
         event_time=timestamp_pb2.Timestamp(seconds=1),
@@ -294,3 +296,187 @@ def test_proto_history_event_to_dataclass():
     assert response.workflow_execution_failed_event_attributes.details == he.workflow_execution_failed_event_attributes.failure.details
     assert response.workflow_execution_failed_event_attributes.decision_task_completed_event_id == he.workflow_execution_failed_event_attributes.decision_task_completed_event_id
 
+
+def test_proto_workflow_execution_started_event_attributes_to_dataclass():
+    event_attributes = history_pb2.WorkflowExecutionStartedEventAttributes(
+        workflow_type=common_pb2.WorkflowType(
+            name="workflow_type",
+        ),
+        parent_execution_info=workflow_pb2.ParentExecutionInfo(
+            domain_id="domain_id",
+            domain_name="domain_name",
+            workflow_execution=common_pb2.WorkflowExecution(
+                run_id="run_id",
+                workflow_id="workflow_id",
+            ),
+            initiated_id=100,
+        ),
+        task_list=tasklist_pb2.TaskList(
+            name="task_list_name",
+            kind=tasklist_pb2.TASK_LIST_KIND_NORMAL,
+        ),
+        input=common_pb2.Payload(
+            data=bytes("this is my input", 'utf-8')
+        ),
+        execution_start_to_close_timeout=duration_pb2.Duration(
+            seconds=10000000
+        ),
+        task_start_to_close_timeout=duration_pb2.Duration(
+            seconds=10000000
+        ),
+        continued_execution_run_id="12345",
+        initiator=workflow_pb2.CONTINUE_AS_NEW_INITIATOR_CRON_SCHEDULE,
+        continued_failure=common_pb2.Failure(
+            reason="reason",
+            details=bytes("details", 'utf-8'),
+        ),
+        last_completion_result=common_pb2.Payload(
+            data=bytes("last_completion_result", 'utf-8')
+        ),
+        original_execution_run_id="12345",
+        identity="12345",
+        first_execution_run_id="12345",
+        retry_policy=common_pb2.RetryPolicy(
+            initial_interval=duration_pb2.Duration(
+                seconds=100000000
+            ),
+            backoff_coefficient=1.0,
+            maximum_interval=duration_pb2.Duration(
+                seconds=100000000
+            ),
+            maximum_attempts=10,
+            non_retryable_error_reasons=["a", "b"],
+            expiration_interval=duration_pb2.Duration(
+                seconds=100000000
+            ),
+        ),
+        attempt=20,
+        expiration_time=timestamp_pb2.Timestamp(
+            seconds=1647985091,
+        ),
+        cron_schedule="12345",
+        first_decision_task_backoff=duration_pb2.Duration(
+            seconds=1647985091,
+        ),
+        memo=common_pb2.Memo(
+            fields={
+                "a": common_pb2.Payload(
+                    data=bytes("memo_a", 'utf-8')
+                ),
+                "b": common_pb2.Payload(
+                    data=bytes("memo_b", 'utf-8')
+                )
+            }
+        ),
+        search_attributes=common_pb2.SearchAttributes(
+            indexed_fields={
+                "a": common_pb2.Payload(
+                    data=bytes("indexed_fields_a", 'utf-8')
+                ),
+                "b": common_pb2.Payload(
+                    data=bytes("indexed_fields_b", 'utf-8')
+                )
+            }
+        ),
+        prev_auto_reset_points=workflow_pb2.ResetPoints(
+            points=[
+                workflow_pb2.ResetPointInfo(
+                    binary_checksum="binary",
+                    run_id="run",
+                    first_decision_completed_id=1000,
+                    created_time=timestamp_pb2.Timestamp(
+                        seconds=1647985091
+                    ),
+                    expiring_time=timestamp_pb2.Timestamp(
+                        seconds=1647985091
+                    ),
+                    resettable=True,
+                )
+            ]
+        ),
+        header=common_pb2.Header(
+            fields={
+                "a": common_pb2.Payload(
+                    data=bytes("header_a", 'utf-8')
+                ),
+                "b": common_pb2.Payload(
+                    data=bytes("header_b", 'utf-8')
+                )
+            }
+        )
+    )
+
+    dataclass = proto_workflow_execution_started_event_attributes_to_dataclass(event_attributes)
+
+    assert event_attributes.workflow_type.name == dataclass.workflow_type.name
+    assert event_attributes.parent_execution_info.domain_id == dataclass.parent_execution_info.domain_id
+    assert event_attributes.parent_execution_info.domain_name == dataclass.parent_execution_info.domain_name
+    assert event_attributes.parent_execution_info.workflow_execution.workflow_id == dataclass.parent_execution_info.workflow_execution.workflow_id
+    assert event_attributes.parent_execution_info.workflow_execution.run_id == dataclass.parent_execution_info.workflow_execution.run_id
+    assert event_attributes.parent_execution_info.workflow_execution.workflow_id == dataclass.parent_workflow_execution.workflow_id
+    assert event_attributes.parent_execution_info.workflow_execution.run_id == dataclass.parent_workflow_execution.run_id
+    assert event_attributes.parent_execution_info.initiated_id == dataclass.parent_initiated_event_id
+    assert event_attributes.parent_execution_info.initiated_id == dataclass.parent_execution_info.initiated_id
+    task_list = event_attributes.task_list
+    assert task_list.name == dataclass.task_list.name
+    assert task_list.kind == tasklist_pb2.TASK_LIST_KIND_NORMAL
+    assert event_attributes.input.data.decode("utf-8") == "this is my input"
+    assert event_attributes.execution_start_to_close_timeout.ToSeconds() == dataclass.execution_start_to_close_timeout_seconds
+    assert event_attributes.execution_start_to_close_timeout.ToMilliseconds() == dataclass.execution_start_to_close_timeout
+    assert event_attributes.continued_execution_run_id == dataclass.continued_execution_run_id
+    assert dataclass.initiator == ContinueAsNewInitiator.CronSchedule
+    continued_failed = event_attributes.continued_failure
+    assert continued_failed.reason == dataclass.continued_failure_reason
+    assert dataclass.continued_failure_details.decode("utf-8") == "details"
+    assert event_attributes.last_completion_result.data.decode("utf-8") == "last_completion_result"
+    assert event_attributes.original_execution_run_id == dataclass.original_execution_run_id
+    assert event_attributes.identity == dataclass.identity
+    assert event_attributes.first_execution_run_id == dataclass.first_execution_run_id
+    retry_policy = event_attributes.retry_policy
+    assert retry_policy.initial_interval.ToSeconds() == dataclass.retry_policy.initial_interval_in_seconds
+    assert retry_policy.initial_interval.ToMilliseconds() == dataclass.retry_policy.initial_interval
+    assert retry_policy.backoff_coefficient == dataclass.retry_policy.backoff_coefficient
+    assert retry_policy.maximum_interval.ToSeconds() == dataclass.retry_policy.maximum_interval_in_seconds
+    assert retry_policy.maximum_interval.ToMilliseconds() == dataclass.retry_policy.maximum_interval
+    assert retry_policy.maximum_attempts == dataclass.retry_policy.maximum_attempts
+    assert len(dataclass.retry_policy.non_retriable_error_reasons) == 2
+    assert dataclass.retry_policy.non_retriable_error_reasons[0] == "a"
+    assert dataclass.retry_policy.non_retriable_error_reasons[1] == "b"
+    assert retry_policy.expiration_interval.ToSeconds() == dataclass.retry_policy.expiration_interval_in_seconds
+    assert retry_policy.expiration_interval.ToMilliseconds() == dataclass.retry_policy.expiration_interval
+    assert event_attributes.attempt == dataclass.attempt
+    assert event_attributes.expiration_time.ToDatetime() == dataclass.expiration_timestamp
+    assert event_attributes.cron_schedule == dataclass.cron_schedule
+    assert event_attributes.first_decision_task_backoff.ToSeconds() == dataclass.first_decision_task_backoff_seconds
+    assert event_attributes.first_decision_task_backoff.ToMilliseconds() == dataclass.first_decision_task_backoff
+    assert len(dataclass.memo.fields) == 2
+    assert dataclass.memo.fields["a"].decode("utf-8") == "memo_a"
+    assert dataclass.memo.fields["b"].decode("utf-8") == "memo_b"
+    assert len(dataclass.search_attributes.indexed_fields) == 2
+    assert dataclass.search_attributes.indexed_fields["a"].decode("utf-8") == "indexed_fields_a"
+    assert dataclass.search_attributes.indexed_fields["b"].decode("utf-8") == "indexed_fields_b"
+    assert len(dataclass.header.fields) == 2
+    assert dataclass.header.fields["a"].decode("utf-8") == "header_a"
+    assert dataclass.header.fields["b"].decode("utf-8") == "header_b"
+    assert len(dataclass.prev_auto_reset_points.points) == 1
+    assert event_attributes.prev_auto_reset_points.points[0].binary_checksum == dataclass.prev_auto_reset_points.points[0].binary_checksum
+    assert event_attributes.prev_auto_reset_points.points[0].run_id == dataclass.prev_auto_reset_points.points[0].run_id
+    assert event_attributes.prev_auto_reset_points.points[0].first_decision_completed_id == dataclass.prev_auto_reset_points.points[0].first_decision_completed_id
+    assert event_attributes.prev_auto_reset_points.points[0].created_time.ToDatetime() == dataclass.prev_auto_reset_points.points[0].created_time
+    assert event_attributes.prev_auto_reset_points.points[0].expiring_time.ToDatetime() == dataclass.prev_auto_reset_points.points[0].expiring_time
+    assert event_attributes.prev_auto_reset_points.points[0].resettable == dataclass.prev_auto_reset_points.points[0].resettable
+
+
+def test_proto_task_list_kind_to_dataclass():
+    assert proto_task_list_kind_to_dataclass(tasklist_pb2.TASK_LIST_KIND_NORMAL) == TaskListKind.NORMAL
+    assert proto_task_list_kind_to_dataclass(tasklist_pb2.TASK_LIST_KIND_STICKY) == TaskListKind.STICKY
+    assert proto_task_list_kind_to_dataclass(tasklist_pb2.TASK_LIST_KIND_INVALID) == TaskListKind.INVALID
+    assert proto_task_list_kind_to_dataclass() == TaskListKind.INVALID
+
+
+def test_proto_continue_as_new_initiator_to_dataclass():
+    assert proto_continue_as_new_initiator_to_dataclass(workflow_pb2.CONTINUE_AS_NEW_INITIATOR_CRON_SCHEDULE) == ContinueAsNewInitiator.CronSchedule
+    assert proto_continue_as_new_initiator_to_dataclass(workflow_pb2.CONTINUE_AS_NEW_INITIATOR_INVALID) == ContinueAsNewInitiator.Invalid
+    assert proto_continue_as_new_initiator_to_dataclass(workflow_pb2.CONTINUE_AS_NEW_INITIATOR_RETRY_POLICY) == ContinueAsNewInitiator.RetryPolicy
+    assert proto_continue_as_new_initiator_to_dataclass(workflow_pb2.CONTINUE_AS_NEW_INITIATOR_DECIDER) == ContinueAsNewInitiator.Decider
+    assert proto_continue_as_new_initiator_to_dataclass() == ContinueAsNewInitiator.Invalid
